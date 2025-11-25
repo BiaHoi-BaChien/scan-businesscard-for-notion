@@ -7,4 +7,13 @@
 .env
 .phpunit.result.cache
 /storage/logs/*.log
+/storage/logs/*.txt
 /bootstrap/cache/*.php
+/storage/framework/
+/storage/app/
+/storage/tmp/
+tmp_test.txt
+/php-conf/
+/database/database.sqlite
+/_ide_helper.php
+/.phpstorm.meta.php

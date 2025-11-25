@@ -22,7 +22,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/analyze', [BusinessCardController::class, 'analyze'])->name('cards.analyze');
     Route::post('/notion', [BusinessCardController::class, 'pushToNotion'])->name('cards.notion');
 
-    Route::middleware(fn ($request, $next) => auth()->user()?->is_admin ? $next($request) : abort(403))->group(function () {
+    Route::middleware('admin')->group(function () {
         Route::get('/users', [UserController::class, 'index'])->name('users.index');
         Route::post('/users', [UserController::class, 'store'])->name('users.store');
         Route::patch('/users/{user}', [UserController::class, 'update'])->name('users.update');

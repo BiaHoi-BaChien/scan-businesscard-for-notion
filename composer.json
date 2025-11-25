@@ -1,5 +1,5 @@
 {
-    "name": "scan-businesscard-for-notion",
+    "name": "scan-businesscard-for-notion/scan-businesscard-for-notion",
     "description": "Business card OCR and Notion connector built with Laravel",
     "type": "project",
     "require": {
