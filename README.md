@@ -35,9 +35,9 @@
 | `DEFAULT_ADMIN_PASSWORD` | 既定管理者のパスワード（シーダーが利用）。 |
 | `OPENAI_API_KEY` | OpenAI API キー。 |
 | `NOTION_API_KEY` | Notion のインテグレーションシークレット。 |
-| `NOTION_DATABASE_ID` | 登録先データベース ID。 |
-| `NOTION_PROPERTY_MAPPING` | Notion のプロパティ対応表 JSON。例: `{ "name": "Name", "email": "Email" }` |
-| `NOTION_VERSION` | Notion API バージョン（例: `2022-06-28`）。 |
+| `NOTION_DATA_SOURCE_ID` | 登録先データベース ID。 |
+| `NOTION_PROPERTY_MAPPING` | Notion のプロパティ対応表 JSON。例: `{ "name": {"name": "名前", "type": "title"} }` |
+| `NOTION_VERSION` | Notion API バージョン（例: `2025-09-03`）。 |
 
 ## 認証と管理者
 
