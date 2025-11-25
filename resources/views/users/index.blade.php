@@ -1,7 +1,10 @@
 <x-layouts.app>
     <section class="grid grid-2">
         <article>
-            <h2>ユーザー一覧</h2>
+            <div class="grid" style="grid-template-columns: 1fr auto; align-items: center;">
+                <h2 style="margin:0;">ユーザー一覧</h2>
+                <a href="{{ url()->previous() }}" role="button" class="secondary">前のページに戻る</a>
+            </div>
             <ul>
                 @foreach($users as $user)
                     <li class="grid" style="align-items:center; grid-template-columns: 1fr 1fr 1fr auto; gap:0.5rem;">
