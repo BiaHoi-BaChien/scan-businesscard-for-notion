@@ -1,14 +1,14 @@
-<x-layouts.app>
+﻿<x-layouts.app>
     <section class="grid grid-2" x-data="Object.assign(cardUploader(), processor())">
         <article>
             <header class="grid" style="gap:0.25rem;">
                 <h2>名刺アップロード</h2>
                 <p class="muted">表と裏の最大2枚までアップロードできます。ドラッグ＆ドロップ対応。</p>
             </header>
-            <form method="POST" action="{{ route('cards.upload') }}" enctype="multipart/form-data" @submit="processing=true">
+            <form method="POST" action="{{ route('cards.upload') }}" enctype="multipart/form-data" data-upload-form>
                 @csrf
                 <label class="dropzone" @dragover.prevent @drop.prevent="handleDrop($event)">
-                    ここにファイルをドロップ（表面推奨、またはクリックして選択）
+                    ここにファイルをドロップ（表面推奨）、またはクリックして選択！
                     <input type="file" name="front" accept="image/*" @change="updateLabel($event)">
                 </label>
                 <div class="grid grid-2">
@@ -16,7 +16,6 @@
                     <label>裏面<input type="file" name="back" accept="image/*"></label>
                 </div>
                 <div class="grid" style="margin-top:0.5rem;">
-                    <button type="submit" :aria-busy="processing">アップロード</button>
                     <button type="button" class="secondary" @click="clearForm" :disabled="processing">クリア</button>
                 </div>
             </form>
@@ -28,7 +27,7 @@
         <article>
             <header class="grid" style="gap:0.25rem;">
                 <h2>解析結果</h2>
-                <p class="muted">OpenAI APIで抽出された項目を確認してからNotionに登録</p>
+                <p class="muted">OpenAI APIで抽出された内容を確認してからNotionに登録</p>
             </header>
             <div class="grid">
                 @if($card && $card->analysis)
@@ -95,17 +94,33 @@
             async submit(event) {
                 if (this.processing) return;
                 this.processing = true;
-                this.message = event.target.dataset.message || '処理中…';
                 this.controller = new AbortController();
-                const formData = new FormData(event.target);
 
                 try {
+                    const uploadForm = document.querySelector('form[data-upload-form]');
+                    if (uploadForm) {
+                        const hasFiles = Array.from(uploadForm.querySelectorAll('input[type=file]')).some(input => input.files.length > 0);
+                        if (hasFiles) {
+                            this.message = 'アップロード中…';
+                            const uploadResponse = await fetch(uploadForm.action, {
+                                method: uploadForm.method || 'POST',
+                                body: new FormData(uploadForm),
+                                headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                                signal: this.controller.signal,
+                            });
+                            if (!uploadResponse.ok) {
+                                throw new Error('upload_failed');
+                            }
+                        }
+                    }
+
+                    this.message = event.target.dataset.message || '処理中…';
+                    const formData = new FormData(event.target);
+
                     const response = await fetch(event.target.action, {
                         method: event.target.method,
                         body: formData,
-                        headers: {
-                            'X-Requested-With': 'XMLHttpRequest',
-                        },
+                        headers: { 'X-Requested-With': 'XMLHttpRequest' },
                         signal: this.controller.signal,
                     });
 
@@ -116,9 +131,9 @@
 
                     window.location.reload();
                 } catch (e) {
-                    if (e.name !== 'AbortError') {
-                        alert('処理に失敗しました');
-                    }
+                    if (e.name === 'AbortError') return;
+                    const message = e.message === 'upload_failed' ? 'アップロードに失敗しました' : '処理に失敗しました';
+                    alert(message);
                 } finally {
                     this.processing = false;
                 }
