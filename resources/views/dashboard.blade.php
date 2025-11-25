@@ -1,0 +1,143 @@
+<x-layouts.app>
+    <section class="grid grid-2" x-data="Object.assign(cardUploader(), processor())">
+        <article>
+            <header class="grid" style="gap:0.25rem;">
+                <h2>名刺アップロード</h2>
+                <p class="muted">表と裏の最大2枚までアップロードできます。ドラッグ＆ドロップ対応。</p>
+            </header>
+            <form method="POST" action="{{ route('cards.upload') }}" enctype="multipart/form-data" @submit="processing=true">
+                @csrf
+                <label class="dropzone" @dragover.prevent @drop.prevent="handleDrop($event)">
+                    ここにファイルをドロップ（表面推奨、またはクリックして選択）
+                    <input type="file" name="front" accept="image/*" @change="updateLabel($event)">
+                </label>
+                <div class="grid grid-2">
+                    <div></div>
+                    <label>裏面<input type="file" name="back" accept="image/*"></label>
+                </div>
+                <div class="grid" style="margin-top:0.5rem;">
+                    <button type="submit" :aria-busy="processing">アップロード</button>
+                    <button type="button" class="secondary" @click="clearForm" :disabled="processing">クリア</button>
+                </div>
+            </form>
+            <form method="POST" action="{{ route('cards.analyze') }}" class="grid" style="margin-top:1rem;" @submit.prevent="submit($event)" data-message="解析中…">
+                @csrf
+                <button type="submit" :disabled="{{ $card?->front_path || $card?->back_path ? 'false' : 'true' }} || processing">解析する</button>
+            </form>
+        </article>
+        <article>
+            <header class="grid" style="gap:0.25rem;">
+                <h2>解析結果</h2>
+                <p class="muted">OpenAI APIで抽出された項目を確認してからNotionに登録</p>
+            </header>
+            <div class="grid">
+                @if($card && $card->analysis)
+                    @foreach($card->analysis as $key => $value)
+                        <label class="muted">{{ $key }}<input type="text" value="{{ $value }}" readonly></label>
+                    @endforeach
+                    <form method="POST" action="{{ route('cards.notion') }}" x-data="{ ok: false }" @submit.prevent="submit($event)" data-message="Notionへ登録中…">
+                        @csrf
+                        <label><input type="checkbox" x-model="ok"> この内容でOK</label>
+                        <button type="submit" :disabled="!ok || processing">Notionに登録する</button>
+                    </form>
+                @else
+                    <p class="muted">解析結果がまだありません。</p>
+                @endif
+            </div>
+        </article>
+    </section>
+
+    <section class="grid grid-2" style="margin-top:1.5rem;">
+        <article>
+            <h3>パスキー更新</h3>
+            <form method="POST" action="{{ route('passkey.update') }}">
+                @csrf
+                <label>新しいパスキー
+                    <input type="text" name="passkey" required>
+                </label>
+                <button type="submit">更新する</button>
+            </form>
+        </article>
+        @if(auth()->user()->is_admin)
+            <article>
+                <header class="grid" style="gap:0.25rem;">
+                    <h3>ユーザー管理</h3>
+                    <p class="muted">追加・更新・削除</p>
+                </header>
+                <a href="{{ route('users.index') }}" role="button" class="secondary">管理画面へ</a>
+            </article>
+        @endif
+    </section>
+</x-layouts.app>
+<script>
+    function cardUploader() {
+        return {
+            processing: false,
+            clearForm() { document.querySelectorAll('input[type=file]').forEach(el => el.value = '') },
+            handleDrop(e) {
+                const files = e.dataTransfer.files;
+                if (files.length > 0) {
+                    const front = document.querySelector('input[name="front"]');
+                    front.files = files;
+                }
+            },
+            updateLabel(e) {
+                this.processing = false;
+            }
+        }
+    }
+
+    function processor() {
+        return {
+            processing: false,
+            controller: null,
+            message: '',
+            async submit(event) {
+                if (this.processing) return;
+                this.processing = true;
+                this.message = event.target.dataset.message || '処理中…';
+                this.controller = new AbortController();
+                const formData = new FormData(event.target);
+
+                try {
+                    const response = await fetch(event.target.action, {
+                        method: event.target.method,
+                        body: formData,
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest',
+                        },
+                        signal: this.controller.signal,
+                    });
+
+                    if (response.redirected) {
+                        window.location.href = response.url;
+                        return;
+                    }
+
+                    window.location.reload();
+                } catch (e) {
+                    if (e.name !== 'AbortError') {
+                        alert('処理に失敗しました');
+                    }
+                } finally {
+                    this.processing = false;
+                }
+            },
+            cancel() {
+                if (this.controller) {
+                    this.controller.abort();
+                }
+                this.processing = false;
+                this.message = '';
+            }
+        }
+    }
+</script>
+<template x-if="processing">
+    <div style="position:fixed;inset:0;background:rgba(0,0,0,0.4);display:flex;align-items:center;justify-content:center;z-index:50;">
+        <article class="contrast" style="min-width:280px;text-align:center;">
+            <p x-text="message || '処理中…'"></p>
+            <button type="button" class="secondary" @click="cancel">CANCEL</button>
+        </article>
+    </div>
+</template>
