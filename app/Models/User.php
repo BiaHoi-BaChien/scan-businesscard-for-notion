@@ -18,7 +18,6 @@ class User extends Authenticatable implements WebAuthnAuthenticatable
 
     protected $fillable = [
         'username',
-        'email',
         'password',
         'encrypted_password',
         'is_admin',
