@@ -3,9 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>{{ config('app.name') }}</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
     <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+    <script src="{{ asset('webauthn.js') }}"></script>
+    <script>
+        window.webauthnRoutes = {
+            registerOptions: "{{ route('webauthn.register.options') }}",
+            register: "{{ route('webauthn.register') }}",
+            loginOptions: "{{ route('webauthn.login.options') }}",
+            login: "{{ route('webauthn.login') }}",
+        };
+        window.webauthnClient = typeof WebAuthn !== 'undefined' && WebAuthn.supportsWebAuthn()
+            ? new WebAuthn(window.webauthnRoutes)
+            : null;
+    </script>
     <style>
         .badge { padding: 0.15rem 0.5rem; border-radius: 999px; background: #0f766e; color: #fff; font-size: 0.8rem; }
         .dropzone { border: 2px dashed #9ca3af; padding: 1rem; border-radius: 0.75rem; text-align: center; background: #f9fafb; cursor: pointer; }

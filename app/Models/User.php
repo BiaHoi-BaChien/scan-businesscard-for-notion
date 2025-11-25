@@ -6,10 +6,15 @@ use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Laragear\WebAuthn\Contracts\WebAuthnAuthenticatable;
+use Laragear\WebAuthn\WebAuthnAuthentication;
+use Laragear\WebAuthn\WebAuthnData;
+use Ramsey\Uuid\Uuid;
+use Ramsey\Uuid\UuidInterface;
 
-class User extends Authenticatable
+class User extends Authenticatable implements WebAuthnAuthenticatable
 {
-    use HasFactory, Notifiable;
+    use HasFactory, Notifiable, WebAuthnAuthentication;
 
     protected $fillable = [
         'username',
@@ -40,6 +45,20 @@ class User extends Authenticatable
 
     public function hasPasskey(): bool
     {
-        return ! empty($this->passkey_hash);
+        try {
+            return $this->webAuthnCredentials()->exists();
+        } catch (\Throwable $e) {
+            return ! empty($this->passkey_hash);
+        }
+    }
+
+    public function webAuthnData(): WebAuthnData
+    {
+        return WebAuthnData::make($this->email ?? "{$this->username}@example.test", $this->username);
+    }
+
+    public function webAuthnId(): UuidInterface
+    {
+        return Uuid::uuid5(Uuid::NAMESPACE_URL, 'user:'.$this->getAuthIdentifier());
     }
 }

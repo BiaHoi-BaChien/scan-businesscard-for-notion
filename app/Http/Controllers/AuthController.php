@@ -18,8 +18,7 @@ class AuthController extends Controller
     {
         $credentials = $request->validate([
             'username' => 'required|string',
-            'password' => 'nullable|string',
-            'passkey' => 'nullable|string',
+            'password' => 'required|string',
         ]);
 
         $user = User::where('username', $credentials['username'])->first();
@@ -29,19 +28,8 @@ class AuthController extends Controller
         }
 
         $passwordProvided = $credentials['password'] ?? null;
-        $passkeyProvided = $credentials['passkey'] ?? null;
 
-        $authenticated = false;
-
-        if ($passwordProvided && Hash::check($passwordProvided, $user->password)) {
-            $authenticated = true;
-        }
-
-        if (! $authenticated && $passkeyProvided && $user->passkey_hash && Hash::check($passkeyProvided, $user->passkey_hash)) {
-            $authenticated = true;
-        }
-
-        if (! $authenticated) {
+        if (! $passwordProvided || ! Hash::check($passwordProvided, $user->password)) {
             return back()->withErrors(['password' => '認証に失敗しました'])->withInput();
         }
 

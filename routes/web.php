@@ -3,20 +3,24 @@
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\BusinessCardController;
 use App\Http\Controllers\DashboardController;
-use App\Http\Controllers\PasskeyController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\WebAuthn\WebAuthnLoginController;
+use App\Http\Controllers\WebAuthn\WebAuthnRegisterController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('guest')->group(function () {
     Route::get('/login', [AuthController::class, 'showLogin'])->name('login.form');
     Route::post('/login', [AuthController::class, 'login'])->name('login');
+    Route::post('/webauthn/login/options', [WebAuthnLoginController::class, 'options'])->name('webauthn.login.options');
+    Route::post('/webauthn/login', [WebAuthnLoginController::class, 'login'])->name('webauthn.login');
 });
 
 Route::middleware('auth')->group(function () {
     Route::get('/', function () { return redirect()->route('dashboard'); });
     Route::get('/dashboard', DashboardController::class)->name('dashboard');
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
-    Route::post('/passkey', [PasskeyController::class, 'update'])->name('passkey.update');
+    Route::post('/webauthn/register/options', [WebAuthnRegisterController::class, 'options'])->name('webauthn.register.options');
+    Route::post('/webauthn/register', [WebAuthnRegisterController::class, 'register'])->name('webauthn.register');
 
     Route::post('/upload', [BusinessCardController::class, 'upload'])->name('cards.upload');
     Route::post('/analyze', [BusinessCardController::class, 'analyze'])->name('cards.analyze');

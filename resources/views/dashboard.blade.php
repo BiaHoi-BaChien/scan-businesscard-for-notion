@@ -31,8 +31,21 @@
             </header>
             <div class="grid">
                 @if($card && $card->analysis)
-                    @foreach($card->analysis as $key => $value)
-                        <label class="muted">{{ $key }}<input type="text" value="{{ $value }}" readonly></label>
+                    @php
+                        $labels = [
+                            'name' => '氏名',
+                            'company' => '会社名',
+                            'website' => '会社サイトURL',
+                            'email' => 'メールアドレス',
+                            'phone_number_1' => '電話番号1',
+                            'phone_number_2' => '電話番号2',
+                            'industry' => '業種',
+                        ];
+                    @endphp
+                    @foreach($labels as $key => $label)
+                        @if(array_key_exists($key, $card->analysis))
+                            <label class="muted">{{ $label }}<input type="text" value="{{ $card->analysis[$key] }}" readonly></label>
+                        @endif
                     @endforeach
                     <form method="POST" action="{{ route('cards.notion') }}" x-data="{ ok: false }" @submit.prevent="submit($event)" data-message="Notionへ登録中…">
                         @csrf
@@ -48,14 +61,12 @@
 
     <section class="grid grid-2" style="margin-top:1.5rem;">
         <article>
-            <h3>パスキー更新</h3>
-            <form method="POST" action="{{ route('passkey.update') }}">
-                @csrf
-                <label>新しいパスキー
-                    <input type="text" name="passkey" required>
-                </label>
-                <button type="submit">更新する</button>
-            </form>
+            <h3>パスキー登録（WebAuthn/FIDO2）</h3>
+            <p class="muted">スマホの指紋認証やFace IDを使ってログインできるようにします。</p>
+            <div class="grid">
+                <button type="button" id="register-passkey">この端末を登録する</button>
+                <p class="muted" style="margin:0;">登録後、「パスキーでログイン」ボタンから生体認証でサインインできます。</p>
+            </div>
         </article>
         @if(auth()->user()->is_admin)
             <article>
@@ -147,6 +158,33 @@
             }
         }
     }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        const registerButton = document.getElementById('register-passkey');
+        if (!registerButton) return;
+
+        if (!window.webauthnClient) {
+            registerButton.disabled = true;
+            registerButton.textContent = 'このブラウザはパスキー非対応';
+            return;
+        }
+
+        registerButton.addEventListener('click', async () => {
+            registerButton.disabled = true;
+            const original = registerButton.textContent;
+            registerButton.textContent = '登録中…';
+
+            try {
+                await window.webauthnClient.register();
+                alert('パスキーを登録しました');
+                window.location.reload();
+            } catch (e) {
+                registerButton.disabled = false;
+                registerButton.textContent = original;
+                alert('パスキー登録に失敗しました。再度お試しください。');
+            }
+        });
+    });
 </script>
 <template x-if="processing">
     <div style="position:fixed;inset:0;background:rgba(0,0,0,0.4);display:flex;align-items:center;justify-content:center;z-index:50;">
