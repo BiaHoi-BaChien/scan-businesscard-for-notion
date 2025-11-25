@@ -4,7 +4,10 @@
 /storage/*.key
 /.idea
 /.vscode
+.DS_Store
+.env.local
 .env
+.phpunit.xml
 .phpunit.result.cache
 /storage/logs/*.log
 /storage/logs/*.txt
@@ -17,3 +20,5 @@ tmp_test.txt
 /database/database.sqlite
 /_ide_helper.php
 /.phpstorm.meta.php
+/public/build
+/npm-debug.log*

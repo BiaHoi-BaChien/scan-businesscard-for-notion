@@ -78,7 +78,12 @@ class BusinessCardController extends Controller
             ]);
 
             if ($response->ok()) {
-                $analysis = array_merge($analysis, $response->json('choices.0.message.content') ?? []);
+                $content = $response->json('choices.0.message.content');
+                $decoded = is_string($content) ? json_decode($content, true) : $content;
+
+                if (is_array($decoded)) {
+                    $analysis = array_merge($analysis, $decoded);
+                }
             }
         }
 
