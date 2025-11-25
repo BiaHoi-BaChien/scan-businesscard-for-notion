@@ -24,6 +24,7 @@ Route::middleware('auth')->group(function () {
 
     Route::post('/upload', [BusinessCardController::class, 'upload'])->name('cards.upload');
     Route::post('/analyze', [BusinessCardController::class, 'analyze'])->name('cards.analyze');
+    Route::post('/clear', [BusinessCardController::class, 'clear'])->name('cards.clear');
     Route::post('/notion', [BusinessCardController::class, 'pushToNotion'])->name('cards.notion');
 
     Route::middleware('admin')->group(function () {

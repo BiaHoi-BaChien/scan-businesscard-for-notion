@@ -25,6 +25,21 @@
         .grid { display: grid; gap: 1rem; }
         @media (min-width: 768px) { .grid-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
         .muted { color: #6b7280; }
+        .cards { display: grid; gap: 1rem; grid-template-columns: 1fr; }
+        @media (min-width: 960px) { .cards { grid-template-columns: 1.05fr 0.95fr; } }
+        .panel { background: #0f172a; padding: 1.25rem; border-radius: 0.75rem; border: 1px solid #1f2937; box-shadow: 0 10px 24px rgba(0,0,0,0.2); }
+        .stack { display: grid; }
+        .stack.gap-sm { gap: 0.5rem; }
+        .block { width: 100%; }
+        .file-label { display: inline-block; padding: 0.5rem 1rem; border-radius: 0.5rem; background: #e5e7eb; color: #111827; cursor: pointer; }
+        .file-label input[type=file] { display: none; }
+        .align-center { align-items: center; }
+        @keyframes wave {
+            0% { transform: translateY(0); }
+            50% { transform: translateY(-4px); }
+            100% { transform: translateY(0); }
+        }
+        .wave-text { display: inline-block; animation: wave 1s ease-in-out infinite; }
     </style>
 </head>
 <body>
