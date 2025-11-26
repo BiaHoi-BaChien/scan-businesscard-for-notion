@@ -11,7 +11,7 @@ class CheckUserPassword extends Command
     /**
      * The name and signature of the console command.
      */
-    protected $signature = 'user:check-password {username : Username of the account} {password : Password to validate}';
+    protected $signature = 'user:check-password {username : Username of the account} {password? : Password to validate (leave empty to be prompted)}';
 
     /**
      * The console command description.
@@ -25,6 +25,16 @@ class CheckUserPassword extends Command
     {
         $username = $this->argument('username');
         $password = $this->argument('password');
+
+        if ($password === null || $password === '') {
+            $password = $this->secret('Password (input hidden): ');
+        }
+
+        if (! is_string($password) || $password === '') {
+            $this->error('Password is required.');
+
+            return self::FAILURE;
+        }
 
         $user = User::where('username', $username)->select(['id', 'username', 'password'])->first();
 
