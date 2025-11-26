@@ -1,5 +1,5 @@
 ﻿<x-layouts.app>
-    <section class="cards" x-data="Object.assign(deviceState(), cardUploader(false), processor())" x-init="initDeviceState(); scrollToResultsIfNeeded(@json(!is_null(session('analysis'))))">
+    <section class="cards" x-data="Object.assign(deviceState(), cardUploader(false), processor({ notionUrl: @json(session('notion_url')) }))" x-init="initDeviceState(); scrollToResultsIfNeeded(@json(!is_null(session('analysis'))))">
         <article class="panel">
             <header class="grid" style="gap:0.35rem; align-items:flex-start;">
                 <div>
@@ -85,10 +85,10 @@
                         </div>
                         <label><input type="checkbox" x-model="ok"> この内容でOK</label>
                         <button type="submit" class="primary block" :disabled="!ok || processing">Notionに登録する</button>
-                        @if(session('notion_url'))
+                        <template x-if="notionUrl">
                             <div>
                                 <a
-                                    href="{{ session('notion_url') }}"
+                                    :href="notionUrl"
                                     class="secondary"
                                     target="_blank"
                                     rel="noopener noreferrer"
@@ -96,7 +96,7 @@
                                     登録したNotionページを開く
                                 </a>
                             </div>
-                        @endif
+                        </template>
                     </form>
                 @else
                     <p class="muted">まだ解析結果がありません。</p>
@@ -225,7 +225,7 @@
         }
     }
 
-    function processor() {
+    function processor(initialState = {}) {
         return {
             processing: false,
             controller: null,
@@ -233,6 +233,7 @@
             messageChars: [],
             showOverlay: true,
             successMessage: '処理が完了しました',
+            notionUrl: initialState.notionUrl || null,
             setMessage(msg) {
                 this.message = msg || '';
                 this.messageChars = this.message.split('');
@@ -263,7 +264,7 @@
                     const response = await fetch(event.target.action, {
                         method: event.target.method,
                         body: formData,
-                        headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                        headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' },
                         signal: this.controller.signal,
                     });
 
@@ -271,6 +272,26 @@
                         await this.handleSuccess();
                         successHandled = true;
                         window.location.href = response.url;
+                        return;
+                    }
+
+                    const contentType = response.headers.get('content-type') || '';
+                    if (contentType.includes('application/json')) {
+                        const data = await response.json().catch(() => ({}));
+
+                        if (response.ok) {
+                            this.successMessage = data?.message || this.successMessage;
+                            if (data?.notion_url) {
+                                this.notionUrl = data.notion_url;
+                            }
+
+                            await this.handleSuccess();
+                            successHandled = true;
+                            return;
+                        }
+
+                        const errorMessage = data?.message || '通信に失敗しました';
+                        alert(errorMessage);
                         return;
                     }
 

@@ -117,6 +117,10 @@ class BusinessCardController extends Controller
     {
         $analysis = session('analysis') ?? [];
         if (! $analysis) {
+            if ($request->expectsJson()) {
+                return response()->json(['message' => '解析結果がありません'], 422);
+            }
+
             return back()->withErrors(['notion' => '解析結果がありません']);
         }
 
@@ -125,8 +129,14 @@ class BusinessCardController extends Controller
         $notionVersion = config('services.notion.version');
 
         if (blank($apiKey) || blank($dataSourceId) || blank($notionVersion)) {
+            $message = 'Notionの設定が不足しています';
+
+            if ($request->expectsJson()) {
+                return response()->json(['message' => $message], 422);
+            }
+
             throw ValidationException::withMessages([
-                'notion' => 'Notionの設定が不足しています',
+                'notion' => $message,
             ]);
         }
 
@@ -205,11 +215,28 @@ class BusinessCardController extends Controller
         }
 
         if (! $response->ok()) {
-            return back()->withErrors(['notion' => 'Notion登録に失敗しました: '.$response->body()]);
+            $error = 'Notion登録に失敗しました: '.$response->body();
+
+            if ($request->expectsJson()) {
+                return response()->json(['message' => $error], $response->status());
+            }
+
+            return back()->withErrors(['notion' => $error]);
         }
 
         $pageUrl = $response->json('url');
         $pageUrl = is_string($pageUrl) && $pageUrl !== '' ? $pageUrl : null;
+
+        session()->flash('status', 'Notionへの登録が完了しました');
+        session()->flash('toast', 'notion_complete');
+        session()->flash('notion_url', $pageUrl);
+
+        if ($request->expectsJson()) {
+            return response()->json([
+                'message' => 'Notionへの登録が完了しました',
+                'notion_url' => $pageUrl,
+            ]);
+        }
 
         return back()->with('status', 'Notionへの登録が完了しました')
             ->with('toast', 'notion_complete')
