@@ -23,6 +23,7 @@
                             <button type="button" class="secondary" @click="openMobilePicker('frontInput', true)">カメラで撮影</button>
                         </div>
                         <input type="file" x-ref="frontInput" name="front" accept="image/*" @change="updateLabel($event)" class="visually-hidden">
+                        <p class="muted" aria-live="polite">選択中: <span x-text="frontFileName || 'なし'"></span></p>
                     </div>
                 </template>
                 <template x-if="!isMobile">
@@ -41,6 +42,7 @@
                             <button type="button" class="secondary" @click="openMobilePicker('backInput', true)">カメラで撮影</button>
                         </div>
                         <input type="file" x-ref="backInput" name="back" accept="image/*" @change="updateLabel($event)" class="visually-hidden">
+                        <p class="muted" aria-live="polite">選択中: <span x-text="backFileName || 'なし'"></span></p>
                     </div>
                 </template>
                 <p class="muted">送信すると画像を保存せずに解析を実行します。</p>
@@ -159,9 +161,13 @@
         return {
             processing: false,
             hasFiles: initialHasFiles,
+            frontFileName: '',
+            backFileName: '',
             clearForm() {
                 document.querySelectorAll('input[type=file]').forEach(el => el.value = '');
                 this.hasFiles = false;
+                this.frontFileName = '';
+                this.backFileName = '';
             },
             openMobilePicker(refName, useCamera = false) {
                 const input = this.$refs?.[refName];
@@ -180,13 +186,28 @@
                 if (files.length > 0) {
                     const front = document.querySelector('input[name="front"]');
                     front.files = files;
-                    this.hasFiles = true;
+                    this.frontFileName = files[0]?.name || '';
+                    this.updateHasFiles();
                 }
             },
-            updateLabel() {
+            updateLabel(event) {
+                const target = event?.target;
+                const selectedFile = target?.files?.[0]?.name || '';
+
+                if (target?.name === 'front') {
+                    this.frontFileName = selectedFile;
+                }
+
+                if (target?.name === 'back') {
+                    this.backFileName = selectedFile;
+                }
+
+                this.updateHasFiles();
+            },
+            updateHasFiles() {
                 const uploadForm = document.querySelector('form[data-upload-form]');
                 if (uploadForm) {
-                    this.hasFiles = Array.from(uploadForm.querySelectorAll('input[type=file]')).some(input => input.files.length > 0) || this.hasFiles;
+                    this.hasFiles = Array.from(uploadForm.querySelectorAll('input[type=file]')).some(input => input.files.length > 0);
                 }
             }
         }
