@@ -16,7 +16,10 @@
             if (!supportsPasskey) return;
 
             try {
-                window.webauthnClient = new WebAuthn();
+                // Send session cookies even when the frontend and backend are on different
+                // origins (e.g. Vite dev server), otherwise WebAuthn requests lose the
+                // authentication context and fail silently.
+                window.webauthnClient = new WebAuthn({}, {}, true);
             } catch (error) {
                 console.warn('Failed to initialize WebAuthn client', error);
             }
