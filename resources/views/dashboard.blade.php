@@ -45,7 +45,6 @@
                         <p class="muted" aria-live="polite">選択中: <span x-text="backFileName || 'なし'"></span></p>
                     </div>
                 </template>
-                <p class="muted">送信すると画像を保存せずに解析を実行します。</p>
                 <button type="submit" :disabled="!hasFiles || processing" class="primary block">解析する</button>
             </form>
         </article>
