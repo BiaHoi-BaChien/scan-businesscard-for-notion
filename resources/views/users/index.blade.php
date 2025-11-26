@@ -7,12 +7,18 @@
             </div>
             <ul>
                 @foreach($users as $user)
-                    <li class="grid" style="align-items:center; grid-template-columns: 1fr 1fr 1fr auto; gap:0.5rem;">
+                    <li class="grid" style="align-items:center; grid-template-columns: 1fr 1fr 1fr auto auto; gap:0.5rem;">
                         <div>
                             <strong>{{ $user->username }}</strong><br>
                         </div>
                         <span>{{ $user->is_admin ? 'ADMIN' : 'USER' }}</span>
                         <span>@if($user->hasPasskey())<span class="badge">パスキー登録済み</span>@endif</span>
+                        @if($user->hasPasskey())
+                            <form method="POST" action="{{ route('users.passkey.destroy', $user) }}" onsubmit="return confirm('登録済みのパスキーを削除しますか？');">
+                                @csrf @method('DELETE')
+                                <button type="submit" class="secondary">登録済みのパスキーを削除</button>
+                            </form>
+                        @endif
                         <form method="POST" action="{{ route('users.destroy', $user) }}" onsubmit="return confirm('削除しますか？');">
                             @csrf @method('DELETE')
                             <button type="submit" class="secondary">削除</button>
