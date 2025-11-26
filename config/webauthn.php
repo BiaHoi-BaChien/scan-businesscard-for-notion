@@ -1,5 +1,10 @@
 <?php
 
+// Resolve a sensible default relying party ID from the application URL or the current request
+// host when available. This prevents WebAuthn from failing with a `NotAllowedError` when the
+// configured host (or a missing `WEBAUTHN_ID`) doesn't match the actual domain being used.
+$defaultRelyingPartyId = parse_url(config('app.url'), PHP_URL_HOST) ?: ($_SERVER['HTTP_HOST'] ?? null);
+
 return [
 
     /*
@@ -15,7 +20,7 @@ return [
 
     'relying_party' => [
         'name' => env('WEBAUTHN_NAME', config('app.name')),
-        'id' => env('WEBAUTHN_ID'),
+        'id' => env('WEBAUTHN_ID', $defaultRelyingPartyId),
     ],
 
     /*
@@ -30,7 +35,7 @@ return [
     | For multiple origins, separate them using comma, like `foo,bar`.
     */
 
-    'origins' => env('WEBAUTHN_ORIGINS'),
+    'origins' => env('WEBAUTHN_ORIGINS', config('app.url')),
 
     /*
     |--------------------------------------------------------------------------
