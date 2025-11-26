@@ -17,7 +17,7 @@
    - バックエンド: `composer install`
    - フロントエンド: `npm install`
 4. SQLite を利用する場合は、`.env` の `DB_DATABASE` で指定したパスに空のファイルを作成します（例: `touch database/database.sqlite`）。
-5. マイグレーションとシーディングを実行して既定の管理者を作成します（`.env` の `DEFAULT_ADMIN_USERNAME` / `DEFAULT_ADMIN_PASSWORD` が使用されます）。
+5. マイグレーションとシーディングを実行して既定の管理者を作成します（`.env` の `AUTH_SECRET` が未設定の場合、管理者は作成されません）。
    - `php artisan migrate`
    - `php artisan db:seed`
 6. 開発サーバーを起動します。
@@ -31,9 +31,9 @@
 | 変数名 | 説明 |
 | --- | --- |
 | `DB_DATABASE` | SQLite ファイルのパス。例: `database/database.sqlite` |
-| `AUTH_SECRET` | 認証用の秘密鍵（JWT/Session 用）。 |
-| `DEFAULT_ADMIN_USERNAME` | 既定管理者のユーザー名（シーダーが利用）。 |
-| `DEFAULT_ADMIN_PASSWORD` | 既定管理者のパスワード（シーダーが利用）。 |
+| `AUTH_SECRET` | 認証用の秘密鍵（JWT/Session 用）。管理者作成には必須です。 |
+| `DEFAULT_ADMIN_USERNAME` | 既定管理者のユーザー名（シーダーが利用）。`AUTH_SECRET` が設定されている場合に適用されます。 |
+| `DEFAULT_ADMIN_PASSWORD` | 既定管理者のパスワード（シーダーが利用）。`AUTH_SECRET` が設定されている場合に適用されます。 |
 | `OPENAI_API_KEY` | OpenAI API キー。 |
 | `NOTION_API_KEY` | Notion のインテグレーションシークレット。 |
 | `NOTION_DATA_SOURCE_ID` | 登録先データベース ID。 |
