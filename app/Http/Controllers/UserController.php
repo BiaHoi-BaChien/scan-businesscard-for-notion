@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 
 class UserController extends Controller
@@ -78,10 +79,28 @@ class UserController extends Controller
 
     public function destroyPasskey(User $user)
     {
-        $user->update([
-            'passkey_hash' => null,
-            'passkey_registered_at' => null,
-        ]);
+        try {
+            $deletedCredentials = $user->webAuthnCredentials()->delete();
+
+            $user->update([
+                'passkey_hash' => null,
+                'passkey_registered_at' => null,
+            ]);
+
+            Log::info('Removed passkey for user', [
+                'user_id' => $user->id,
+                'username' => $user->username,
+                'deleted_credentials' => $deletedCredentials,
+            ]);
+        } catch (\Throwable $exception) {
+            Log::error('Failed to remove passkey for user', [
+                'user_id' => $user->id,
+                'username' => $user->username,
+                'error' => $exception->getMessage(),
+            ]);
+
+            return back()->withErrors(['passkey' => 'パスキーの削除に失敗しました。管理者にお問い合わせください。']);
+        }
 
         return back()->with('status', '登録済みのパスキーを削除しました');
     }

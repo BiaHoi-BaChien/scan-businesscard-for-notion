@@ -49,7 +49,7 @@
             --shadow: 0 14px 40px rgba(0, 0, 0, 0.08);
         }
         body { background: radial-gradient(circle at 18% 22%, #e8f6ec 0, #f4f8f3 28%, #f4f8f3 100%); color: var(--text); font-family: "Manrope", "Noto Sans JP", system-ui, -apple-system, sans-serif; }
-        header nav { background: transparent; box-shadow: none; display: flex; flex-wrap: wrap; gap: 0.5rem 1rem; align-items: center; }
+        header nav { background: transparent; box-shadow: none; padding: 0; }
         .badge { padding: 0.2rem 0.65rem; border-radius: 999px; background: #0f9f4f; color: #fff; font-size: 0.8rem; white-space: nowrap; }
         .dropzone { border: 2px dashed #9bd6ad; padding: 1.2rem; border-radius: 0.9rem; text-align: center; background: var(--primary-soft); color: var(--text); cursor: pointer; transition: border-color 0.2s ease, transform 0.1s ease; }
         .dropzone:hover { border-color: var(--primary); transform: translateY(-2px); }
@@ -86,10 +86,26 @@
         .wave-char:nth-child(3n) { animation-delay: 0.24s; }
         .overlay-card { min-width: 320px; text-align: center; }
         main.container { padding-top: 1.5rem; padding-bottom: 2rem; }
-        nav ul { align-items: center; gap: 0.6rem; flex-wrap: wrap; }
-        nav ul:last-of-type { margin-left: auto; justify-content: flex-end; }
         nav button.contrast { white-space: nowrap; }
         nav li strong { color: var(--text); }
+        .app-nav { display: flex; gap: 1rem; align-items: flex-start; justify-content: space-between; flex-wrap: wrap; }
+        .app-brand { display: grid; gap: 0.3rem; }
+        .app-title { margin: 0; }
+        .app-user { display: inline-flex; gap: 0.4rem; align-items: center; flex-wrap: wrap; color: var(--muted); font-weight: 600; }
+        .app-actions { display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; justify-content: flex-end; }
+        .app-actions form { margin: 0; }
+        .user-list { list-style: none; padding: 0; margin: 0; display: grid; gap: 0.85rem; }
+        .user-card { border: 1px solid var(--border); border-radius: 0.9rem; padding: 0.9rem 1rem; background: var(--card-bg); box-shadow: var(--shadow); display: grid; gap: 0.65rem; }
+        .user-header { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; flex-wrap: wrap; }
+        .user-meta { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; color: var(--muted); }
+        .user-actions { display: grid; gap: 0.5rem; grid-auto-flow: row; }
+        .user-actions form { margin: 0; }
+        .role-pill { padding: 0.25rem 0.55rem; border-radius: 999px; background: var(--primary-soft); color: var(--primary); font-weight: 700; font-size: 0.85rem; letter-spacing: 0.03em; }
+        @media (min-width: 720px) {
+            .app-nav { align-items: center; }
+            .user-card { grid-template-columns: 1fr auto; align-items: center; }
+            .user-actions { grid-auto-flow: column; grid-auto-columns: max-content; justify-content: flex-end; }
+        }
         form button.primary { background: var(--primary); border-color: var(--primary); }
         form button.primary:hover { filter: brightness(0.92); }
     </style>
@@ -97,17 +113,27 @@
 <body>
 <header class="container">
     <nav>
-        <ul>
-            <li><strong>{{ config('app.name') }}</strong></li>
-        </ul>
-        <ul>
+        <div class="app-nav">
+            <div class="app-brand">
+                <h1 class="app-title">{{ config('app.name') }}</h1>
+                @auth
+                    <div class="app-user">
+                        <span>{{ auth()->user()->username }}</span>
+                        @if(auth()->user()->hasPasskey())
+                            <span class="badge">パスキー登録済み</span>
+                        @endif
+                    </div>
+                @endauth
+            </div>
             @auth
-                <li>{{ auth()->user()->username }} @if(auth()->user()->hasPasskey())<span class="badge">パスキー登録済み</span>@endif</li>
-                <li>
+                <div class="app-actions">
+                    @if(request()->routeIs('users.index'))
+                        <a href="{{ route('dashboard') }}" role="button" class="secondary">ダッシュボードに戻る</a>
+                    @endif
                     <form method="POST" action="{{ route('logout') }}">@csrf<button type="submit" class="contrast">ログアウト</button></form>
-                </li>
+                </div>
             @endauth
-        </ul>
+        </div>
     </nav>
 </header>
 <main class="container">
