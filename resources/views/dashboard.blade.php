@@ -85,6 +85,18 @@
                         </div>
                         <label><input type="checkbox" x-model="ok"> この内容でOK</label>
                         <button type="submit" class="primary block" :disabled="!ok || processing">Notionに登録する</button>
+                        @if(session('notion_url'))
+                            <div>
+                                <a
+                                    href="{{ session('notion_url') }}"
+                                    class="secondary"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                >
+                                    登録したNotionページを開く
+                                </a>
+                            </div>
+                        @endif
                     </form>
                 @else
                     <p class="muted">まだ解析結果がありません。</p>
