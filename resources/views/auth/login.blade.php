@@ -10,7 +10,7 @@
                 <input type="text" name="username" value="{{ old('username') }}" required>
             </label>
             <label>パスワード
-                <input type="password" name="password" placeholder="パスワードを入力">
+                <input type="password" name="password" placeholder="パスワードを入力" required>
             </label>
             <button type="submit">パスワードでログイン</button>
         </form>
