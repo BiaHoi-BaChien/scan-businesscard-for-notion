@@ -37,11 +37,6 @@ class User extends Authenticatable implements WebAuthnAuthenticatable
         'passkey_registered_at' => 'datetime',
     ];
 
-    public function businessCards()
-    {
-        return $this->hasMany(BusinessCard::class);
-    }
-
     public function hasPasskey(): bool
     {
         try {

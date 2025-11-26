@@ -2,65 +2,42 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\BusinessCard;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Storage;
 
 class BusinessCardController extends Controller
 {
-    public function upload(Request $request)
+    // 画像を保存せず、そのままOpenAIに渡して解析する
+    public function analyze(Request $request)
     {
         $request->validate([
             'front' => 'nullable|image|max:4096',
             'back' => 'nullable|image|max:4096',
         ]);
 
-        $user = Auth::user();
-        $card = BusinessCard::updateOrCreate(
-            ['user_id' => $user->id],
-            []
-        );
-
-        if ($request->file('front')) {
-            $card->front_path = $request->file('front')->store('cards/'.$user->id, 'public');
-        }
-
-        if ($request->file('back')) {
-            $card->back_path = $request->file('back')->store('cards/'.$user->id, 'public');
-        }
-
-        $card->save();
-
-        return back()->with('status', '画像をアップロードしました');
-    }
-
-    public function analyze(Request $request)
-    {
-        $user = Auth::user();
-        $card = BusinessCard::where('user_id', $user->id)->latest()->first();
-
-        if (! $card || (! $card->front_path && ! $card->back_path)) {
-            return back()->withErrors(['card' => '先に画像をアップロードしてください']);
+        if (! $request->file('front') && ! $request->file('back')) {
+            return back()->withErrors(['analyze' => '表面または裏面の画像を選択してください'])->withInput();
         }
 
         $images = array_filter([
-            $card->front_path ? Storage::disk('public')->path($card->front_path) : null,
-            $card->back_path ? Storage::disk('public')->path($card->back_path) : null,
+            $request->file('front')?->getRealPath(),
+            $request->file('back')?->getRealPath(),
         ]);
 
-        $prompt = '名刺画像から氏名、会社名、会社ホームページURL、メールアドレス、電話番号1、電話番号2、業種をJSONで返して下さい。業種は会社名からWEB検索した体で簡潔にまとめてください。';
+        $prompt = '名刺画像から以下をJSONで回答してください（省略可の値は null を許容）。'
+            .' {"name":string,"job_title":string|null,"company":string|null,"address":string|null,"website":string|null,"email":string|null,"phone_number_1":string|null,"phone_number_2":string|null,"industry":string|null}';
         $apiKey = config('services.openai.api_key');
 
         if (! $apiKey) {
-            return back()->withErrors(['analyze' => 'OpenAI APIキーが未設定です。']);
+            return back()->withErrors(['analyze' => 'OpenAI APIキーが未設定です']);
         }
 
         $analysis = [
             'name' => null,
+            'job_title' => null,
             'company' => null,
+            'address' => null,
             'website' => null,
             'email' => null,
             'phone_number_1' => null,
@@ -92,22 +69,24 @@ class BusinessCardController extends Controller
                 'body' => $response->json(),
             ]);
         }
+
         $decoded = is_string($content) ? json_decode($content, true) : $content;
 
         if (! is_array($decoded)) {
-            return back()->withErrors(['analyze' => '解析結果の形式が不正です。']);
+            return back()->withErrors(['analyze' => '解析結果の形式が不正です']);
         }
 
-        // Normalize common Japanese keys to internal keys
         $normalized = [];
         $aliases = [
-            'name' => ['氏名'],
-            'company' => ['会社名'],
-            'website' => ['会社ホームページURL', '会社サイトURL'],
-            'email' => ['メールアドレス'],
-            'phone_number_1' => ['電話番号1', '電話番号①'],
-            'phone_number_2' => ['電話番号2', '電話番号②'],
-            'industry' => ['業種'],
+            'name' => ['氏名', '名前', 'name'],
+            'job_title' => ['役職', 'title', 'job_title'],
+            'company' => ['会社名', 'company'],
+            'address' => ['住所', 'address'],
+            'website' => ['会社ホームページURL', '会社サイトURL', 'website'],
+            'email' => ['メールアドレス', 'email'],
+            'phone_number_1' => ['電話番号1', 'phone', 'mobile', 'phone_number_1'],
+            'phone_number_2' => ['電話番号2', 'phone_number_2'],
+            'industry' => ['業種', 'industry'],
         ];
 
         foreach ($aliases as $canonical => $keys) {
@@ -122,43 +101,60 @@ class BusinessCardController extends Controller
         $decoded = array_merge($decoded, $normalized);
         $analysis = array_merge($analysis, $decoded);
 
-        $card->update(['analysis' => $analysis]);
+        session()->put('analysis', $analysis);
 
-        return back()->with('status', '解析が完了しました');
-    }
-
-    public function clear(Request $request)
-    {
-        $user = Auth::user();
-        $card = BusinessCard::where('user_id', $user->id)->latest()->first();
-
-        if ($card) {
-            foreach (['front_path', 'back_path'] as $pathKey) {
-                if ($card->$pathKey) {
-                    Storage::disk('public')->delete($card->$pathKey);
-                }
-                $card->$pathKey = null;
-            }
-            $card->analysis = null;
-            $card->save();
-        }
-
-        return back()->with('status', 'アップロード画像と解析結果をクリアしました');
+        return redirect()->route('dashboard')
+            ->with('status', '解析が完了しました')
+            ->with('toast', 'analysis_complete');
     }
 
     public function pushToNotion(Request $request)
     {
-        $user = Auth::user();
-        $card = BusinessCard::where('user_id', $user->id)->latest()->first();
-
-        if (! $card || ! $card->analysis) {
+        $analysis = session('analysis') ?? [];
+        if (! $analysis) {
             return back()->withErrors(['notion' => '解析結果がありません']);
         }
 
-        $mapping = json_decode(config('services.notion.property_mapping'), true) ?? [];
-        $payloadProperties = [];
+        $fields = [
+            'name',
+            'job_title',
+            'company',
+            'address',
+            'website',
+            'email',
+            'phone_number_1',
+            'phone_number_2',
+            'industry',
+        ];
 
-        foreach ($card->analysis as $key => $value) {
+        $inputOverrides = $request->only($fields);
+        foreach ($inputOverrides as $key => $value) {
+            if (! array_key_exists($key, $analysis)) {
+                continue;
+            }
+            $analysis[$key] = is_string($value) ? trim($value) : $value;
+        }
+        session()->put('analysis', $analysis);
+
+        $defaultMapping = [
+            'name' => ['name' => '名前', 'type' => 'title'],
+            'job_title' => ['name' => '役職', 'type' => 'rich_text'],
+            'company' => ['name' => '会社名', 'type' => 'rich_text'],
+            'address' => ['name' => '住所', 'type' => 'rich_text'],
+            'website' => ['name' => '会社サイトURL', 'type' => 'url'],
+            'email' => ['name' => 'メールアドレス', 'type' => 'email'],
+            'phone_number_1' => ['name' => '電話番号1', 'type' => 'phone_number'],
+            'phone_number_2' => ['name' => '電話番号2', 'type' => 'phone_number'],
+            'industry' => ['name' => '業種', 'type' => 'rich_text'],
+        ];
+
+        $mapping = array_replace_recursive(
+            $defaultMapping,
+            json_decode(config('services.notion.property_mapping'), true) ?? []
+        );
+
+        $payloadProperties = [];
+        foreach ($analysis as $key => $value) {
             if (! isset($mapping[$key])) {
                 continue;
             }
@@ -166,6 +162,10 @@ class BusinessCardController extends Controller
             $config = $mapping[$key];
             $name = $config['name'] ?? $key;
             $type = $config['type'] ?? 'rich_text';
+
+            if (is_string($value) && trim($value) === '') {
+                $value = null;
+            }
 
             $payloadProperties[$name] = $this->mapNotionProperty($type, $value);
         }
@@ -193,18 +193,25 @@ class BusinessCardController extends Controller
             return back()->withErrors(['notion' => 'Notion登録に失敗しました: '.$response->body()]);
         }
 
-        return back()->with('status', 'Notionに登録しました');
+        return back()->with('status', 'Notionへの登録が完了しました')
+            ->with('toast', 'notion_complete');
+    }
+
+    public function clear()
+    {
+        session()->forget('analysis');
+        return redirect()->route('dashboard')->with('status', '選択画像と解析結果をクリアしました');
     }
 
     private function mapNotionProperty(string $type, $value): array
     {
         return match ($type) {
-            'title' => ['title' => [['text' => ['content' => (string) $value]]]],
-            'select' => ['select' => ['name' => (string) $value]],
-            'url' => ['url' => $value],
-            'email' => ['email' => $value],
-            'phone_number' => ['phone_number' => $value],
-            default => ['rich_text' => [['text' => ['content' => (string) $value]]]],
+            'title' => ['title' => [['text' => ['content' => (string) ($value ?? '')]]]],
+            'select' => ['select' => $value ? ['name' => (string) $value] : null],
+            'url' => ['url' => $value ?: null],
+            'email' => ['email' => $value ?: null],
+            'phone_number' => ['phone_number' => $value ?: null],
+            default => ['rich_text' => [['text' => ['content' => (string) ($value ?? '')]]]],
         };
     }
 }

@@ -22,10 +22,9 @@ Route::middleware('auth')->group(function () {
     Route::post('/webauthn/register/options', [WebAuthnRegisterController::class, 'options'])->name('webauthn.register.options');
     Route::post('/webauthn/register', [WebAuthnRegisterController::class, 'register'])->name('webauthn.register');
 
-    Route::post('/upload', [BusinessCardController::class, 'upload'])->name('cards.upload');
     Route::post('/analyze', [BusinessCardController::class, 'analyze'])->name('cards.analyze');
-    Route::post('/clear', [BusinessCardController::class, 'clear'])->name('cards.clear');
     Route::post('/notion', [BusinessCardController::class, 'pushToNotion'])->name('cards.notion');
+    Route::post('/clear', [BusinessCardController::class, 'clear'])->name('cards.clear');
 
     Route::middleware('admin')->group(function () {
         Route::get('/users', [UserController::class, 'index'])->name('users.index');

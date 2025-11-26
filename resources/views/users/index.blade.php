@@ -3,7 +3,7 @@
         <article>
             <div class="grid" style="grid-template-columns: 1fr auto; align-items: center;">
                 <h2 style="margin:0;">ユーザー一覧</h2>
-                <a href="{{ url()->previous() }}" role="button" class="secondary">前のページに戻る</a>
+                <a href="{{ route('dashboard') }}" role="button" class="secondary">ダッシュボードに戻る</a>
             </div>
             <ul>
                 @foreach($users as $user)
