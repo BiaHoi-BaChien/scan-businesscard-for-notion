@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\ValidationException;
 
 class UserController extends Controller
 {
@@ -16,6 +17,8 @@ class UserController extends Controller
 
     public function store(Request $request)
     {
+        $authSecret = $this->getAuthSecretOrFail();
+
         $data = $request->validate([
             'username' => 'required|string|unique:users,username',
             'password' => 'required|string|min:8',
@@ -23,7 +26,16 @@ class UserController extends Controller
         ]);
 
         $data['password'] = Hash::make($data['password']);
-        $data['encrypted_password'] = base64_encode(openssl_encrypt($request->input('password'), 'AES-256-CBC', hash('sha256', env('AUTH_SECRET')), 0, substr(hash('sha256', env('AUTH_SECRET')), 0, 16)));
+
+        if ($authSecret) {
+            $data['encrypted_password'] = base64_encode(openssl_encrypt(
+                $request->input('password'),
+                'AES-256-CBC',
+                hash('sha256', $authSecret),
+                0,
+                substr(hash('sha256', $authSecret), 0, 16)
+            ));
+        }
 
         User::create($data);
 
@@ -32,6 +44,8 @@ class UserController extends Controller
 
     public function update(Request $request, User $user)
     {
+        $authSecret = $this->getAuthSecretOrFail();
+
         $data = $request->validate([
             'password' => 'nullable|string|min:8',
             'is_admin' => 'boolean',
@@ -39,7 +53,16 @@ class UserController extends Controller
 
         if ($request->filled('password')) {
             $data['password'] = Hash::make($request->input('password'));
-            $data['encrypted_password'] = base64_encode(openssl_encrypt($request->input('password'), 'AES-256-CBC', hash('sha256', env('AUTH_SECRET')), 0, substr(hash('sha256', env('AUTH_SECRET')), 0, 16)));
+
+            if ($authSecret) {
+                $data['encrypted_password'] = base64_encode(openssl_encrypt(
+                    $request->input('password'),
+                    'AES-256-CBC',
+                    hash('sha256', $authSecret),
+                    0,
+                    substr(hash('sha256', $authSecret), 0, 16)
+                ));
+            }
         }
 
         $user->update($data);
@@ -51,5 +74,18 @@ class UserController extends Controller
     {
         $user->delete();
         return back()->with('status', 'ユーザーを削除しました');
+    }
+
+    private function getAuthSecretOrFail(): string
+    {
+        $authSecret = env('AUTH_SECRET');
+
+        if (! $authSecret) {
+            throw ValidationException::withMessages([
+                'auth_secret' => 'AUTH_SECRET が設定されていません。',
+            ]);
+        }
+
+        return $authSecret;
     }
 }
