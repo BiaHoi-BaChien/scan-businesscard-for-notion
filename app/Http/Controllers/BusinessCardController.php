@@ -220,8 +220,12 @@ class BusinessCardController extends Controller
 
     private function mapNotionProperty(string $type, $value): array
     {
+        $valueIsEmpty = is_string($value) ? trim($value) === '' : $value === null;
+
         return match ($type) {
-            'title' => ['title' => [['text' => ['content' => (string) ($value ?? '')]]]],
+            'title' => ['title' => [[
+                'text' => ['content' => $valueIsEmpty ? '名前未入力' : (string) $value],
+            ]]],
             'select' => ['select' => $value ? ['name' => (string) $value] : null],
             'url' => ['url' => $value ?: null],
             'email' => ['email' => $value ?: null],
