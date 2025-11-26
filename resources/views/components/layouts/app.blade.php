@@ -16,11 +16,18 @@
             const supportsPasskey = 'PublicKeyCredential' in window && typeof Webpass !== 'undefined';
             if (!supportsPasskey) return;
 
+            const webpassRoutes = {
+                registerOptions: @json(route('webauthn.register.options')),
+                register: @json(route('webauthn.register')),
+                loginOptions: @json(route('webauthn.login.options')),
+                login: @json(route('webauthn.login')),
+            };
+
             try {
                 // Send session cookies even when the frontend and backend are on different
-                // origins (e.g. Vite dev server), otherwise WebAuthn requests lose the
-                // authentication context and fail silently.
-                window.webpassClient = new Webpass({}, {}, true);
+                // origins (e.g. Vite dev server) or served from a subdirectory, otherwise
+                // WebAuthn requests lose the authentication context and fail silently.
+                window.webpassClient = new Webpass(webpassRoutes, {}, true);
             } catch (error) {
                 console.warn('Failed to initialize Webpass client', error);
             }
