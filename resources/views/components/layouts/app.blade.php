@@ -49,8 +49,8 @@
             --shadow: 0 14px 40px rgba(0, 0, 0, 0.08);
         }
         body { background: radial-gradient(circle at 18% 22%, #e8f6ec 0, #f4f8f3 28%, #f4f8f3 100%); color: var(--text); font-family: "Manrope", "Noto Sans JP", system-ui, -apple-system, sans-serif; }
-        header nav { background: transparent; box-shadow: none; }
-        .badge { padding: 0.2rem 0.65rem; border-radius: 999px; background: #0f9f4f; color: #fff; font-size: 0.8rem; }
+        header nav { background: transparent; box-shadow: none; display: flex; flex-wrap: wrap; gap: 0.5rem 1rem; align-items: center; }
+        .badge { padding: 0.2rem 0.65rem; border-radius: 999px; background: #0f9f4f; color: #fff; font-size: 0.8rem; white-space: nowrap; }
         .dropzone { border: 2px dashed #9bd6ad; padding: 1.2rem; border-radius: 0.9rem; text-align: center; background: var(--primary-soft); color: var(--text); cursor: pointer; transition: border-color 0.2s ease, transform 0.1s ease; }
         .dropzone:hover { border-color: var(--primary); transform: translateY(-2px); }
         .grid { display: grid; gap: 1rem; }
@@ -86,7 +86,9 @@
         .wave-char:nth-child(3n) { animation-delay: 0.24s; }
         .overlay-card { min-width: 320px; text-align: center; }
         main.container { padding-top: 1.5rem; padding-bottom: 2rem; }
-        nav ul { align-items: center; }
+        nav ul { align-items: center; gap: 0.6rem; flex-wrap: wrap; }
+        nav ul:last-of-type { margin-left: auto; justify-content: flex-end; }
+        nav button.contrast { white-space: nowrap; }
         nav li strong { color: var(--text); }
         form button.primary { background: var(--primary); border-color: var(--primary); }
         form button.primary:hover { filter: brightness(0.92); }
