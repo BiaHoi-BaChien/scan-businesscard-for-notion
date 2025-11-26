@@ -26,7 +26,6 @@ class UserSeeder extends Seeder
                 'password' => Hash::make($password),
                 'encrypted_password' => base64_encode(openssl_encrypt($password, 'AES-256-CBC', hash('sha256', $secret), 0, substr(hash('sha256', $secret), 0, 16))),
                 'is_admin' => true,
-                'email' => $username.'@example.com',
             ]
         );
     }
