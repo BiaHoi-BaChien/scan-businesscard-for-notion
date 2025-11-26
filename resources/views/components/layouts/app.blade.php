@@ -69,7 +69,8 @@
             to { transform: translate(-50%, -50%) scale(1); opacity: 1; }
         }
         @keyframes waveChar { 0% { transform: translateY(0); } 30% { transform: translateY(-4px); } 60% { transform: translateY(0); } 100% { transform: translateY(0); } }
-        .wave-char { display: inline-block; animation: waveChar 1s ease-in-out infinite; }
+        .message-char { display: inline-block; }
+        .wave-char { animation: waveChar 1s ease-in-out infinite; }
         .wave-char:nth-child(odd) { animation-delay: 0.08s; }
         .wave-char:nth-child(2n) { animation-delay: 0.16s; }
         .wave-char:nth-child(3n) { animation-delay: 0.24s; }
