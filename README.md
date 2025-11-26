@@ -15,7 +15,7 @@
 3. 依存関係をインストールします。
    - バックエンド: `composer install`
    - フロントエンド: `npm install`
-4. SQLite を利用する場合は、`.env` の `DB_DATABASE` で指定したパスに空ファイルを作成します（例: `touch database/database.sqlite`）。
+4. SQLite を利用する場合は、`.env` の `DB_DATABASE` で指定したパスに空のファイルを作成します（例: `touch database/database.sqlite`）。
 5. マイグレーションとシーディングを実行して既定の管理者を作成します（`.env` の `DEFAULT_ADMIN_USERNAME` / `DEFAULT_ADMIN_PASSWORD` が使用されます）。
    - `php artisan migrate`
    - `php artisan db:seed`
