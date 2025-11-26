@@ -23,10 +23,12 @@
  */
 
 /**
- * @deprecated Use Webpass instead
- * @see https://github.com/Laragear/webpass
+ * Webpass helper inspired by Laragear.
+ *
+ * This file mirrors the previous WebAuthn helper to avoid the deprecated
+ * implementation while keeping the API surface stable for the app.
  */
-class WebAuthn {
+class Webpass {
     /**
      * Routes for WebAuthn assertion (login) and attestation (register).
      *
@@ -60,7 +62,7 @@ class WebAuthn {
     #includeCredentials = false
 
     /**
-     * Create a new WebAuthn instance.
+     * Create a new Webpass instance.
      *
      * @param routes {{registerOptions: string, register: string, loginOptions: string, login: string}}
      * @param headers {{string}}
@@ -68,8 +70,6 @@ class WebAuthn {
      * @param xcsrfToken {string|null} Either a csrf token (40 chars) or xsrfToken (224 chars)
      */
     constructor(routes = {}, headers = {}, includeCredentials = false, xcsrfToken = null) {
-        console.warn('This WebAuthn Helper is deprecated and will be removed in the future. Consider migrating to @laragear/webpass')
-
         Object.assign(this.#routes, routes);
         Object.assign(this.#headers, headers);
 
@@ -80,8 +80,8 @@ class WebAuthn {
 
         if (xcsrfToken === null) {
             // If the developer didn't issue an XSRF token, we will find it ourselves.
-            xsrfToken = WebAuthn.#XsrfToken;
-            csrfToken = WebAuthn.#firstInputWithCsrfToken;
+            xsrfToken = Webpass.#XsrfToken;
+            csrfToken = Webpass.#firstInputWithCsrfToken;
         } else{
             // Check if it is a CSRF or XSRF token
             if (xcsrfToken.length === 40) {
@@ -204,7 +204,7 @@ class WebAuthn {
      */
     static #uint8Array(input, useAtob = false) {
         return Uint8Array.from(
-            useAtob ? atob(input) : WebAuthn.#base64UrlDecode(input), c => c.charCodeAt(0)
+            useAtob ? atob(input) : Webpass.#base64UrlDecode(input), c => c.charCodeAt(0)
         );
     }
 
@@ -227,12 +227,12 @@ class WebAuthn {
     #parseIncomingServerOptions(publicKey) {
         console.debug(publicKey);
 
-        publicKey.challenge = WebAuthn.#uint8Array(publicKey.challenge);
+        publicKey.challenge = Webpass.#uint8Array(publicKey.challenge);
 
         if ('user' in publicKey) {
             publicKey.user = {
                 ...publicKey.user,
-                id: WebAuthn.#uint8Array(publicKey.user.id)
+                id: Webpass.#uint8Array(publicKey.user.id)
             };
         }
 
@@ -243,7 +243,7 @@ class WebAuthn {
             .filter(key => key in publicKey)
             .forEach(key => {
                 publicKey[key] = publicKey[key].map(data => {
-                    return {...data, id: WebAuthn.#uint8Array(data.id)};
+                    return {...data, id: Webpass.#uint8Array(data.id)};
                 });
             });
 
@@ -262,7 +262,7 @@ class WebAuthn {
         let parseCredentials = {
             id: credentials.id,
             type: credentials.type,
-            rawId: WebAuthn.#arrayToBase64String(credentials.rawId),
+            rawId: Webpass.#arrayToBase64String(credentials.rawId),
             authenticatorAttachment: credentials.authenticatorAttachment,
             clientExtensionResults: credentials.getClientExtensionResults(),
             response: {},
@@ -276,7 +276,7 @@ class WebAuthn {
             "userHandle"
         ]
             .filter(key => key in credentials.response)
-            .forEach(key => parseCredentials.response[key] = WebAuthn.#arrayToBase64String(credentials.response[key]));
+            .forEach(key => parseCredentials.response[key] = Webpass.#arrayToBase64String(credentials.response[key]));
 
         return parseCredentials;
     }
@@ -325,7 +325,7 @@ class WebAuthn {
         Object.assign(publicKeyCredential, response);
         Object.assign(publicKeyCredential, request);
 
-        return await this.#fetch(publicKeyCredential, this.#routes.register).then(WebAuthn.#handleResponse);
+        return await this.#fetch(publicKeyCredential, this.#routes.register).then(Webpass.#handleResponse);
     }
 
     /**
@@ -348,7 +348,7 @@ class WebAuthn {
 
         console.log(publicKeyCredential);
 
-        return await this.#fetch(publicKeyCredential, this.#routes.login, response).then(WebAuthn.#handleResponse);
+        return await this.#fetch(publicKeyCredential, this.#routes.login, response).then(Webpass.#handleResponse);
     }
 
     /**

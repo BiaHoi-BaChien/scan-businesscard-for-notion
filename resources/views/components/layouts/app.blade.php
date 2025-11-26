@@ -8,21 +8,21 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
     <script>window.appDebug = @json(config('app.debug'));</script>
     <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
-    <script src="{{ asset('webauthn.js') }}"></script>
+    <script src="{{ asset('webpass.js') }}"></script>
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            if (window.webauthnClient) return;
+            if (window.webpassClient) return;
 
-            const supportsPasskey = 'PublicKeyCredential' in window && typeof WebAuthn !== 'undefined';
+            const supportsPasskey = 'PublicKeyCredential' in window && typeof Webpass !== 'undefined';
             if (!supportsPasskey) return;
 
             try {
                 // Send session cookies even when the frontend and backend are on different
                 // origins (e.g. Vite dev server), otherwise WebAuthn requests lose the
                 // authentication context and fail silently.
-                window.webauthnClient = new WebAuthn({}, {}, true);
+                window.webpassClient = new Webpass({}, {}, true);
             } catch (error) {
-                console.warn('Failed to initialize WebAuthn client', error);
+                console.warn('Failed to initialize Webpass client', error);
             }
         });
     </script>

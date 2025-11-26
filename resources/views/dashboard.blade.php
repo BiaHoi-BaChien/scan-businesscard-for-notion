@@ -239,7 +239,7 @@
         const registerButton = document.getElementById('register-passkey');
         if (!registerButton) return;
 
-        if (!window.webauthnClient) {
+        if (!window.webpassClient) {
             registerButton.disabled = true;
             registerButton.textContent = 'このブラウザはパスキー非対応';
             return;
@@ -251,7 +251,7 @@
             registerButton.textContent = '登録中';
 
             try {
-                await window.webauthnClient.register();
+                await window.webpassClient.register();
                 alert('パスキーを登録しました');
                 window.location.reload();
             } catch (e) {
