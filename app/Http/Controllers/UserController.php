@@ -76,6 +76,16 @@ class UserController extends Controller
         return back()->with('status', 'ユーザーを削除しました');
     }
 
+    public function destroyPasskey(User $user)
+    {
+        $user->update([
+            'passkey_hash' => null,
+            'passkey_registered_at' => null,
+        ]);
+
+        return back()->with('status', '登録済みのパスキーを削除しました');
+    }
+
     private function getAuthSecretOrFail(): string
     {
         $authSecret = env('AUTH_SECRET');
