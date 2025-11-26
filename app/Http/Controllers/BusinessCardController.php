@@ -208,8 +208,12 @@ class BusinessCardController extends Controller
             return back()->withErrors(['notion' => 'Notion登録に失敗しました: '.$response->body()]);
         }
 
+        $pageUrl = $response->json('url');
+        $pageUrl = is_string($pageUrl) && $pageUrl !== '' ? $pageUrl : null;
+
         return back()->with('status', 'Notionへの登録が完了しました')
-            ->with('toast', 'notion_complete');
+            ->with('toast', 'notion_complete')
+            ->with('notion_url', $pageUrl);
     }
 
     public function clear()

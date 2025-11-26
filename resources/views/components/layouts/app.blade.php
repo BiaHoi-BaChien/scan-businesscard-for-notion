@@ -114,6 +114,16 @@
     @if(session('status'))
         <article class="contrast">{{ session('status') }}</article>
     @endif
+    @if(session('notion_url'))
+        <article class="contrast">
+            <div class="grid align-center" style="gap: 0.6rem; align-items: center;">
+                <p style="margin: 0;">Notionページが作成されました。</p>
+                <a href="{{ session('notion_url') }}" class="secondary" target="_blank" rel="noopener noreferrer">
+                    登録したNotionページを開く
+                </a>
+            </div>
+        </article>
+    @endif
     @if($errors->any())
         <article class="contrast">
             <ul>

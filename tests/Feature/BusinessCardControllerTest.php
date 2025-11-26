@@ -106,7 +106,10 @@ class BusinessCardControllerTest extends TestCase
         ];
 
         Http::fake([
-            'https://api.notion.com/v1/pages' => Http::response(['id' => 'page_123'], 200),
+            'https://api.notion.com/v1/pages' => Http::response([
+                'id' => 'page_123',
+                'url' => 'https://www.notion.so/page_123',
+            ], 200),
         ]);
 
         $response = $this->actingAs($user)
@@ -117,6 +120,7 @@ class BusinessCardControllerTest extends TestCase
 
         $response->assertStatus(302);
         $response->assertSessionHas('status', 'Notionへの登録が完了しました');
+        $response->assertSessionHas('notion_url', 'https://www.notion.so/page_123');
 
         Http::assertSent(function ($request) {
             $data = $request->data();
@@ -141,7 +145,10 @@ class BusinessCardControllerTest extends TestCase
         ]);
 
         Http::fake([
-            'https://api.notion.com/v1/pages' => Http::response(['id' => 'page_123'], 200),
+            'https://api.notion.com/v1/pages' => Http::response([
+                'id' => 'page_123',
+                'url' => 'https://www.notion.so/page_123',
+            ], 200),
         ]);
 
         $response = $this->actingAs($user)
