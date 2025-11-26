@@ -58,11 +58,11 @@
         .file-label input[type=file] { display: none; }
         .align-center { align-items: center; }
         .toast-container { position: fixed; left: 50%; top: 50%; transform: translate(-50%, -50%); z-index: 60; pointer-events: none; }
-        .toast-container.toast-active { animation: toast-slide-in 0.45s ease forwards; }
+        .toast-container.toast-active { animation: toast-fade-in 0.25s ease forwards; }
         .toast { padding: 0.85rem 1.1rem; border-radius: 0.65rem; box-shadow: 0 10px 30px rgba(0,0,0,0.18); min-width: 240px; text-align: center; background: #0f5132; color: #ecfdf3; pointer-events: auto; }
-        @keyframes toast-slide-in {
-            from { transform: translate(-50%, -120%); opacity: 0; }
-            to { transform: translate(-50%, -50%); opacity: 1; }
+        @keyframes toast-fade-in {
+            from { transform: translate(-50%, -50%) scale(0.96); opacity: 0; }
+            to { transform: translate(-50%, -50%) scale(1); opacity: 1; }
         }
         @keyframes waveChar { 0% { transform: translateY(0); } 30% { transform: translateY(-4px); } 60% { transform: translateY(0); } 100% { transform: translateY(0); } }
         .wave-char { display: inline-block; animation: waveChar 1s ease-in-out infinite; }
