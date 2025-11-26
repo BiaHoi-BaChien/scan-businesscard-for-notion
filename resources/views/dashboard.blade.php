@@ -82,7 +82,12 @@
                 <article class="contrast overlay-card">
                     <p class="wave-text" aria-live="assertive">
                         <template x-for="(char, idx) in messageChars" :key="idx">
-                            <span class="wave-char" :style="`animation-delay:${idx * 60}ms`" x-text="char"></span>
+                            <span
+                                class="message-char"
+                                :class="{ 'wave-char': shouldAnimateMessage() }"
+                                :style="`animation-delay:${idx * 60}ms`"
+                                x-text="char"
+                            ></span>
                         </template>
                     </p>
                     <button type="button" class="secondary" @click="cancel">CANCEL</button>
@@ -165,13 +170,17 @@
             message: '',
             messageChars: [],
             showOverlay: true,
+            successMessage: '処理が完了しました',
             setMessage(msg) {
                 this.message = msg || '';
                 this.messageChars = this.message.split('');
             },
             async handleSuccess() {
-                this.setMessage('処理が完了しました');
+                this.setMessage(this.successMessage);
                 await new Promise(resolve => setTimeout(resolve, 800));
+            },
+            shouldAnimateMessage() {
+                return this.message !== this.successMessage;
             },
             async clearAll(event) {
                 if (this.processing) return;
