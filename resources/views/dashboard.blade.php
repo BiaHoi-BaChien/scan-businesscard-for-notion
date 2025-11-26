@@ -12,18 +12,18 @@
                 <template x-if="!isMobile">
                     <label class="dropzone" @dragover.prevent @drop.prevent="handleDrop($event)">
                         ここにファイルをドロップ（表面推奨）、またはクリックして選択
-                        <input type="file" name="front" accept="image/*" @change="updateLabel($event)">
+                        <input type="file" name="front" accept="image/*" capture="environment" @change="updateLabel($event)">
                     </label>
                 </template>
                 <template x-if="isMobile">
                     <label class="file-label block">表面のファイルを選択
-                        <input type="file" name="front" accept="image/*" @change="updateLabel($event)">
+                        <input type="file" name="front" accept="image/*" capture="environment" @change="updateLabel($event)">
                     </label>
                 </template>
                 <div class="grid grid-2 align-center">
                     <div class="muted">裏面</div>
                     <label class="file-label">ファイルを選択
-                        <input type="file" name="back" accept="image/*" @change="updateLabel($event)">
+                        <input type="file" name="back" accept="image/*" capture="environment" @change="updateLabel($event)">
                     </label>
                 </div>
                 <p class="muted">送信すると画像を保存せずに解析を実行します。</p>
