@@ -173,6 +173,7 @@
             toastMessage: '',
             toastVisible: false,
             toastTimer: null,
+            pendingToastMessage: '',
             initFlash(toast, status) {
                 if (toast === 'analysis_complete') {
                     this.showToast('解析が完了しました');
@@ -190,6 +191,14 @@
             },
             showToast(message) {
                 if (!message) return;
+                if (this.processing) {
+                    this.pendingToastMessage = message;
+                    return;
+                }
+
+                this.startToast(message);
+            },
+            startToast(message) {
                 this.toastMessage = message;
                 this.toastVisible = true;
                 clearTimeout(this.toastTimer);
@@ -239,6 +248,10 @@
                     this.processing = false;
                     this.showOverlay = true;
                     this.setMessage('');
+                    if (this.pendingToastMessage) {
+                        this.startToast(this.pendingToastMessage);
+                        this.pendingToastMessage = '';
+                    }
                 }
             },
             cancel() {
