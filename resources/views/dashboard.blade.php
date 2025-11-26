@@ -1,5 +1,5 @@
 ﻿<x-layouts.app>
-    <section class="cards" x-data="Object.assign(deviceState(), cardUploader(false), processor())" x-init="initDeviceState(); scrollToResultsIfNeeded(@json(!is_null(session('analysis')))); initFlash(@json(session('toast')), @json(session('status')))">
+    <section class="cards" x-data="Object.assign(deviceState(), cardUploader(false), processor())" x-init="initDeviceState(); scrollToResultsIfNeeded(@json(!is_null(session('analysis'))))">
         <article class="panel">
             <header class="grid" style="gap:0.35rem; align-items:flex-start;">
                 <div>
@@ -89,11 +89,6 @@
                 </article>
             </div>
         </template>
-        <div class="toast-container" x-show="toastVisible" :class="{'toast-active': toastVisible}" :key="toastKey" x-transition.opacity.duration.200ms style="display:none;" @click="hideToast()">
-            <div class="toast contrast">
-                <p x-text="toastMessage"></p>
-            </div>
-        </div>
     </section>
 
     <section class="grid grid-2" style="margin-top:1.5rem; align-items:stretch;">
@@ -170,46 +165,13 @@
             message: '',
             messageChars: [],
             showOverlay: true,
-            toastMessage: '',
-            toastVisible: false,
-            toastTimer: null,
-            pendingToastMessage: '',
-            initFlash(toast, status) {
-                if (toast === 'analysis_complete') {
-                    this.showToast('解析が完了しました');
-                    return;
-                }
-                if (toast === 'notion_complete') {
-                    this.showToast('Notionへの登録が完了しました');
-                    return;
-                }
-                if (status) this.showToast(status);
-            },
             setMessage(msg) {
                 this.message = msg || '';
                 this.messageChars = this.message.split('');
             },
-            showToast(message) {
-                if (!message) return;
-                if (this.processing) {
-                    this.pendingToastMessage = message;
-                    return;
-                }
-
-                this.startToast(message);
-            },
-            startToast(message) {
-                this.toastMessage = message;
-                this.toastVisible = true;
-                clearTimeout(this.toastTimer);
-                this.toastTimer = setTimeout(() => this.hideToast(), 6000);
-            },
-            hideToast() {
-                this.toastVisible = false;
-            },
-            success(event) {
-                const msg = event.target?.dataset?.success;
-                if (msg) this.showToast(msg);
+            async handleSuccess() {
+                this.setMessage('処理が完了しました');
+                await new Promise(resolve => setTimeout(resolve, 800));
             },
             async clearAll(event) {
                 if (this.processing) return;
@@ -222,6 +184,7 @@
                 this.processing = true;
                 this.setMessage(this.showOverlay ? (event.target.dataset.message || '処理中...') : '');
                 this.controller = new AbortController();
+                let successHandled = false;
 
                 try {
                     const formData = new FormData(event.target);
@@ -234,12 +197,14 @@
                     });
 
                     if (response.redirected) {
-                        this.success(event);
+                        await this.handleSuccess();
+                        successHandled = true;
                         window.location.href = response.url;
                         return;
                     }
 
-                    this.success(event);
+                    await this.handleSuccess();
+                    successHandled = true;
                     window.location.reload();
                 } catch (e) {
                     if (e.name === 'AbortError') return;
@@ -247,11 +212,7 @@
                 } finally {
                     this.processing = false;
                     this.showOverlay = true;
-                    this.setMessage('');
-                    if (this.pendingToastMessage) {
-                        this.startToast(this.pendingToastMessage);
-                        this.pendingToastMessage = '';
-                    }
+                    if (!successHandled) this.setMessage('');
                 }
             },
             cancel() {
