@@ -16,16 +16,33 @@
                     </label>
                 </template>
                 <template x-if="isMobile">
-                    <label class="file-label block">表面のファイルを選択
-                        <input type="file" name="front" accept="image/*" capture="environment" @change="updateLabel($event)">
-                    </label>
+                    <div class="stack gap-sm">
+                        <div class="muted">表面の画像を選択</div>
+                        <div class="grid grid-2">
+                            <button type="button" class="secondary" @click="openMobilePicker('frontInput', false)">ギャラリーから選択</button>
+                            <button type="button" class="secondary" @click="openMobilePicker('frontInput', true)">カメラで撮影</button>
+                        </div>
+                        <input type="file" x-ref="frontInput" name="front" accept="image/*" @change="updateLabel($event)" class="visually-hidden">
+                    </div>
                 </template>
-                <div class="grid grid-2 align-center">
-                    <div class="muted">裏面</div>
-                    <label class="file-label">ファイルを選択
-                        <input type="file" name="back" accept="image/*" capture="environment" @change="updateLabel($event)">
-                    </label>
-                </div>
+                <template x-if="!isMobile">
+                    <div class="grid grid-2 align-center">
+                        <div class="muted">裏面</div>
+                        <label class="file-label">ファイルを選択
+                            <input type="file" name="back" accept="image/*" capture="environment" @change="updateLabel($event)">
+                        </label>
+                    </div>
+                </template>
+                <template x-if="isMobile">
+                    <div class="stack gap-sm">
+                        <div class="muted">裏面（任意）</div>
+                        <div class="grid grid-2">
+                            <button type="button" class="secondary" @click="openMobilePicker('backInput', false)">ギャラリーから選択</button>
+                            <button type="button" class="secondary" @click="openMobilePicker('backInput', true)">カメラで撮影</button>
+                        </div>
+                        <input type="file" x-ref="backInput" name="back" accept="image/*" @change="updateLabel($event)" class="visually-hidden">
+                    </div>
+                </template>
                 <p class="muted">送信すると画像を保存せずに解析を実行します。</p>
                 <button type="submit" :disabled="!hasFiles || processing" class="primary block">解析する</button>
             </form>
@@ -145,6 +162,18 @@
             clearForm() {
                 document.querySelectorAll('input[type=file]').forEach(el => el.value = '');
                 this.hasFiles = false;
+            },
+            openMobilePicker(refName, useCamera = false) {
+                const input = this.$refs?.[refName];
+                if (!input || this.processing) return;
+
+                if (useCamera) {
+                    input.setAttribute('capture', 'environment');
+                } else {
+                    input.removeAttribute('capture');
+                }
+
+                input.click();
             },
             handleDrop(e) {
                 const files = e.dataTransfer.files;

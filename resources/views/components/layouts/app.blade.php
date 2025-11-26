@@ -69,6 +69,7 @@
         .file-label { display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.55rem 0.9rem; border-radius: 0.55rem; background: #e3f6ea; color: var(--text); cursor: pointer; border: 1px solid #9bd6ad; transition: background 0.15s ease; }
         .file-label:hover { background: #d5f0df; }
         .file-label input[type=file] { display: none; }
+        .visually-hidden { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
         .align-center { align-items: center; }
         .toast-container { position: fixed; left: 50%; top: 50%; transform: translate(-50%, -50%); z-index: 60; pointer-events: none; }
         .toast-container.toast-active { animation: toast-fade-in 0.25s ease forwards; }
