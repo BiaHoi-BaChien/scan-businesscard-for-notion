@@ -88,6 +88,7 @@ class BusinessCardControllerTest extends TestCase
         return User::create([
             'username' => 'user_'.Str::random(8),
             'password' => Hash::make('password'),
+            'encrypted_password' => 'encrypted_'.Str::random(32),
         ]);
     }
 }
