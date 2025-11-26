@@ -1,18 +1,25 @@
 ﻿<x-layouts.app>
-    <section class="cards" x-data="Object.assign(cardUploader(false), processor())" x-init="initFlash(@json(session('toast')), @json(session('status')))">
+    <section class="cards" x-data="Object.assign(deviceState(), cardUploader(false), processor())" x-init="initDeviceState(); scrollToResultsIfNeeded(@json(!is_null(session('analysis')))); initFlash(@json(session('toast')), @json(session('status')))">
         <article class="panel">
             <header class="grid" style="gap:0.35rem; align-items:flex-start;">
                 <div>
                     <h2 style="margin:0;">名刺アップロード</h2>
-                    <p class="muted" style="margin:0;">表裏最大2枚。ドラッグ＆ドロップにも対応しています。</p>
+                    <p class="muted" style="margin:0;">表裏最大2枚。PCならドラッグ＆ドロップにも対応しています。</p>
                 </div>
             </header>
             <form method="POST" action="{{ route('cards.analyze') }}" enctype="multipart/form-data" class="stack gap-sm" @submit.prevent="submit($event)" data-message="解析中..." data-success="解析が完了しました" data-upload-form>
                 @csrf
-                <label class="dropzone" @dragover.prevent @drop.prevent="handleDrop($event)">
-                    ここにファイルをドロップ（表面推奨）、またはクリックして選択
-                    <input type="file" name="front" accept="image/*" @change="updateLabel($event)">
-                </label>
+                <template x-if="!isMobile">
+                    <label class="dropzone" @dragover.prevent @drop.prevent="handleDrop($event)">
+                        ここにファイルをドロップ（表面推奨）、またはクリックして選択
+                        <input type="file" name="front" accept="image/*" @change="updateLabel($event)">
+                    </label>
+                </template>
+                <template x-if="isMobile">
+                    <label class="file-label block">表面のファイルを選択
+                        <input type="file" name="front" accept="image/*" @change="updateLabel($event)">
+                    </label>
+                </template>
                 <div class="grid grid-2 align-center">
                     <div class="muted">裏面</div>
                     <label class="file-label">ファイルを選択
@@ -23,7 +30,7 @@
                 <button type="submit" :disabled="!hasFiles || processing" class="primary block">解析する</button>
             </form>
         </article>
-        <article class="panel">
+        <article class="panel" id="analysis-results">
             <header class="grid" style="gap:0.35rem; align-items:flex-start;">
                 <div>
                     <h2 style="margin:0;">解析結果</h2>
@@ -110,6 +117,27 @@
     </section>
 </x-layouts.app>
 <script>
+    function deviceState() {
+        return {
+            isMobile: false,
+            initDeviceState() {
+                const mediaQuery = window.matchMedia('(max-width: 768px)');
+                const syncDeviceFlag = () => {
+                    this.isMobile = mediaQuery.matches || navigator.maxTouchPoints > 0;
+                };
+
+                syncDeviceFlag();
+                mediaQuery.addEventListener('change', syncDeviceFlag);
+            },
+            scrollToResultsIfNeeded(hasAnalysis) {
+                if (!hasAnalysis || !this.isMobile) return;
+                const target = document.getElementById('analysis-results');
+                if (!target) return;
+                requestAnimationFrame(() => target.scrollIntoView({ behavior: 'smooth', block: 'start' }));
+            },
+        };
+    }
+
     function cardUploader(initialHasFiles = false) {
         return {
             processing: false,
