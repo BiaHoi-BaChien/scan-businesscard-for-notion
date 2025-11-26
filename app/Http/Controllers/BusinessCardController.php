@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Validation\ValidationException;
 
 class BusinessCardController extends Controller
 {
@@ -119,8 +120,10 @@ class BusinessCardController extends Controller
         $dataSourceId = config('services.notion.data_source_id');
         $notionVersion = config('services.notion.version');
 
-        if (! $apiKey || ! $dataSourceId || ! $notionVersion) {
-            return back()->withErrors(['notion' => 'Notionの設定が不足しています']);
+        if (blank($apiKey) || blank($dataSourceId) || blank($notionVersion)) {
+            throw ValidationException::withMessages([
+                'notion' => 'Notionの設定が不足しています',
+            ]);
         }
 
         $fields = [
