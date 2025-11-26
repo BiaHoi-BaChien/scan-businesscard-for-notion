@@ -113,7 +113,7 @@ class BusinessCardController extends Controller
     {
         $analysis = session('analysis') ?? [];
         if (! $analysis) {
-            throw ValidationException::withMessages(['notion' => '解析結果がありません']);
+            return back()->withErrors(['notion' => '解析結果がありません']);
         }
 
         $apiKey = config('services.notion.api_key');
@@ -121,7 +121,7 @@ class BusinessCardController extends Controller
         $notionVersion = config('services.notion.version');
 
         if (blank($apiKey) || blank($dataSourceId) || blank($notionVersion)) {
-            throw ValidationException::withMessages([
+            return back()->withErrors([
                 'notion' => 'Notionの設定が不足しています',
             ]);
         }
