@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Scan business card for Notion icon">
+  <defs>
+    <clipPath id="rounded">
+      <rect x="16" y="16" width="480" height="480" rx="96" ry="96" />
+    </clipPath>
+  </defs>
+  <rect x="16" y="16" width="480" height="480" rx="96" ry="96" fill="#eef1f0" />
+  <g fill="#3e494e" clip-path="url(#rounded)">
+    <path d="M112 86c-13 0-26 13-26 26v52c0 13 13 26 26 26h52c13 0 26-13 26-26v-52c0-13-13-26-26-26zm0 24h52v52h-52z" transform="scale(1.05) translate(-12,-12)" opacity="0"/>
+    <path d="M80 72c-12 0-24 12-24 24v56h28V96h56V72Z"/>
+    <path d="M432 72v24h-56v56h-28V96c0-12 12-24 24-24Z"/>
+    <path d="M80 440v-24h56v-56h28v56c0 12-12 24-24 24Z"/>
+    <path d="M432 440c12 0 24-12 24-24v-56h-28v56h-56v24Z"/>
+    <rect x="92" y="154" width="236" height="184" rx="28" />
+    <circle cx="160" cy="220" r="36" fill="#f5f7f5" />
+    <rect x="132" y="300" width="156" height="20" rx="10" fill="#f5f7f5" />
+    <rect x="132" y="332" width="156" height="20" rx="10" fill="#f5f7f5" />
+    <rect x="252" y="110" width="170" height="224" rx="34" />
+    <path d="M352 110h70v70z" fill="#eef1f0" />
+    <path d="M352 110h6v64h64v6h-70z" fill="#3e494e" />
+    <path d="M298 170l56-16 32 18v112l-64 18-40-20z" fill="#f5f7f5" />
+    <path d="M344 188l12-2 24 74-18 6-6-18-10 28-18-6z" fill="#3e494e" />
+    <path d="M292 240l88 26v34l-88-26z" fill="#3e494e" />
+    <path d="M292 198l88 26v34l-88-26z" fill="#3e494e" opacity="0.95" />
+    <path d="M292 186l56-16v122l-56-16z" fill="#3e494e" opacity="0.9" />
+    <path d="M120 154h142v24h-38v-8h-104z" fill="#f5f7f5" opacity="0.2" />
+    <path d="M272 154h138v16h-138z" fill="#3e494e" opacity="0.1" />
+  </g>
+</svg>
