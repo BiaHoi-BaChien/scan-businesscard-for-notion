@@ -47,6 +47,7 @@ class BusinessCardController extends Controller
         ];
 
         $encodedImages = array_map(fn ($path) => base64_encode(file_get_contents($path)), $images);
+        session()->forget('analysis');
         $response = Http::withToken($apiKey)->post('https://api.openai.com/v1/chat/completions', [
             'model' => 'gpt-4o-mini',
             'messages' => [
@@ -60,6 +61,7 @@ class BusinessCardController extends Controller
         ]);
 
         if (! $response->ok()) {
+            session()->forget('analysis');
             return back()->withErrors(['analyze' => '解析に失敗しました: '.$response->status()]);
         }
 
@@ -74,6 +76,7 @@ class BusinessCardController extends Controller
         $decoded = is_string($content) ? json_decode($content, true) : $content;
 
         if (! is_array($decoded)) {
+            session()->forget('analysis');
             return back()->withErrors(['analyze' => '解析結果の形式が不正です']);
         }
 
