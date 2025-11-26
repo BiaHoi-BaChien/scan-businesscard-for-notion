@@ -98,7 +98,7 @@
 
     <section class="grid grid-2" style="margin-top:1.5rem; align-items:stretch;">
         <article class="panel">
-            <h3 style="margin-bottom:0.35rem;">パスキー登録（WebAuthn/FIDO2）</h3>
+            <h3 style="margin-bottom:0.35rem;">パスキー登録</h3>
             <p class="muted">スマホの顔認証や指紋・PINでログインできます。</p>
             <div class="stack gap-sm">
                 <button type="button" id="register-passkey">この端末で登録する</button>
