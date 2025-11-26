@@ -17,9 +17,9 @@
    - バックエンド: `composer install`
    - フロントエンド: `npm install`
 4. SQLite を利用する場合は、`.env` の `DB_DATABASE` で指定したパスに空のファイルを作成します（例: `touch database/database.sqlite`）。
-5. マイグレーションとシーディングを実行して既定の管理者を作成します（`AUTH_SECRET` も `APP_KEY` も未設定の場合、管理者は作成されません）。
+5. マイグレーションと管理者作成コマンドを実行します（`AUTH_SECRET` が未設定の場合、エラーとなります）。
    - `php artisan migrate`
-   - `php artisan db:seed`
+   - `php artisan user:create-admin`
 6. 開発サーバーを起動します。
    - バックエンド API: `php artisan serve`
    - フロントエンド（Vite 等）: `npm run dev`
@@ -31,9 +31,7 @@
 | 変数名 | 説明 |
 | --- | --- |
 | `DB_DATABASE` | SQLite ファイルのパス。例: `database/database.sqlite` |
-| `AUTH_SECRET` | パスワードを暗号化し、既定管理者をシーディングする際に使う鍵。未設定の場合は `APP_KEY` を使用し、両方空なら管理者は作成されません。 |
-| `DEFAULT_ADMIN_USERNAME` | 既定管理者のユーザー名（シーダーが利用）。`AUTH_SECRET` または `APP_KEY` が設定されている場合に適用されます。 |
-| `DEFAULT_ADMIN_PASSWORD` | 既定管理者のパスワード（シーダーが利用）。`AUTH_SECRET` または `APP_KEY` が設定されている場合に適用されます。 |
+| `AUTH_SECRET` | パスワードを暗号化し、管理者作成コマンドで利用する鍵。未設定の場合はコマンドがエラーになります。 |
 | `OPENAI_API_KEY` | OpenAI API キー。 |
 | `NOTION_API_KEY` | Notion のインテグレーションシークレット。 |
 | `NOTION_DATA_SOURCE_ID` | 登録先データベース ID。 |
@@ -43,7 +41,7 @@
 ## 認証と管理者
 
 - ログインはパスワード認証に加え、環境に応じてパスキー（Passkey/WebAuthn）も利用できます。
-- 既定の管理者はシーディング時に `.env` の `DEFAULT_ADMIN_USERNAME` / `DEFAULT_ADMIN_PASSWORD` で作成されます。
+- 既定の管理者は `php artisan user:create-admin` を実行し、対話的にユーザー名とパスワードを入力して作成します（`AUTH_SECRET` が必須）。
 - 管理者はアプリ内のユーザー管理画面からユーザーを追加・削除できます（権限のないユーザーは操作できません）。
 
 ### パスワードのハッシュ検証
