@@ -90,7 +90,7 @@
         nav li strong { color: var(--text); }
         .app-nav { display: flex; gap: 1rem; align-items: flex-start; justify-content: space-between; flex-wrap: wrap; }
         .app-brand { display: grid; gap: 0.3rem; }
-        .app-title { margin: 0; }
+        .app-title { margin: 0; color: var(--text); }
         .app-user { display: inline-flex; gap: 0.4rem; align-items: center; flex-wrap: wrap; color: var(--muted); font-weight: 600; }
         .app-actions { display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; justify-content: flex-end; }
         .app-actions form { margin: 0; }
