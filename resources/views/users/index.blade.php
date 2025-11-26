@@ -1,34 +1,51 @@
-﻿<x-layouts.app>
+<x-layouts.app>
     <section class="grid grid-2">
-        <article>
-            <div class="grid" style="grid-template-columns: 1fr auto; align-items: center;">
-                <h2 style="margin:0;">ユーザー一覧</h2>
-                <a href="{{ route('dashboard') }}" role="button" class="secondary">ダッシュボードに戻る</a>
-            </div>
-            <ul>
+        <article class="panel">
+            <header class="grid" style="gap:0.35rem; align-items:flex-start;">
+                <div>
+                    <h2 style="margin:0;">ユーザー一覧</h2>
+                    <p class="muted" style="margin:0;">登録済みユーザーの権限とパスキーを管理します。</p>
+                </div>
+            </header>
+            <ul class="user-list">
                 @foreach($users as $user)
-                    <li class="grid" style="align-items:center; grid-template-columns: 1fr 1fr 1fr auto auto; gap:0.5rem;">
-                        <div>
-                            <strong>{{ $user->username }}</strong><br>
+                    <li class="user-card">
+                        <div class="user-header">
+                            <div>
+                                <strong>{{ $user->username }}</strong>
+                            </div>
+                            <span class="role-pill">{{ $user->is_admin ? 'ADMIN' : 'USER' }}</span>
                         </div>
-                        <span>{{ $user->is_admin ? 'ADMIN' : 'USER' }}</span>
-                        <span>@if($user->hasPasskey())<span class="badge">パスキー登録済み</span>@endif</span>
-                        @if($user->hasPasskey())
-                            <form method="POST" action="{{ route('users.passkey.destroy', $user) }}" onsubmit="return confirm('登録済みのパスキーを削除しますか？');">
+                        <div class="user-meta">
+                            @if($user->hasPasskey())
+                                <span class="badge">パスキー登録済み</span>
+                            @else
+                                <span class="muted">パスキー未登録</span>
+                            @endif
+                        </div>
+                        <div class="user-actions">
+                            @if($user->hasPasskey())
+                                <form method="POST" action="{{ route('users.passkey.destroy', $user) }}" onsubmit="return confirm('登録済みのパスキーを削除しますか？');">
+                                    @csrf @method('DELETE')
+                                    <button type="submit" class="secondary">登録済みのパスキーを削除</button>
+                                </form>
+                            @endif
+                            <form method="POST" action="{{ route('users.destroy', $user) }}" onsubmit="return confirm('削除しますか？');">
                                 @csrf @method('DELETE')
-                                <button type="submit" class="secondary">登録済みのパスキーを削除</button>
+                                <button type="submit" class="secondary">削除</button>
                             </form>
-                        @endif
-                        <form method="POST" action="{{ route('users.destroy', $user) }}" onsubmit="return confirm('削除しますか？');">
-                            @csrf @method('DELETE')
-                            <button type="submit" class="secondary">削除</button>
-                        </form>
+                        </div>
                     </li>
                 @endforeach
             </ul>
         </article>
-        <article>
-            <h2>ユーザー追加</h2>
+        <article class="panel">
+            <header class="grid" style="gap:0.35rem; align-items:flex-start;">
+                <div>
+                    <h2 style="margin:0;">ユーザー追加</h2>
+                    <p class="muted" style="margin:0;">新しいメンバーを作成できます。</p>
+                </div>
+            </header>
             <form method="POST" action="{{ route('users.store') }}" class="grid">
                 @csrf
                 <label>ユーザー名<input name="username" required></label>
