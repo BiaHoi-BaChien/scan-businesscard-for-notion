@@ -85,9 +85,18 @@ class BusinessCardControllerTest extends TestCase
 
     private function createUser(): User
     {
+        $secret = env('AUTH_SECRET', config('app.key')) ?: 'test-secret';
+
         return User::create([
             'username' => 'user_'.Str::random(8),
             'password' => Hash::make('password'),
+            'encrypted_password' => base64_encode(openssl_encrypt(
+                'password',
+                'AES-256-CBC',
+                hash('sha256', $secret),
+                0,
+                substr(hash('sha256', $secret), 0, 16)
+            )),
         ]);
     }
 }
