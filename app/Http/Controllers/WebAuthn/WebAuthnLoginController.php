@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\WebAuthn;
 
 use Illuminate\Contracts\Support\Responsable;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Log;
 use Laragear\WebAuthn\Http\Requests\AssertedRequest;
@@ -24,7 +25,7 @@ class WebAuthnLoginController
     /**
      * Log the user in.
      */
-    public function login(AssertedRequest $request): Response
+    public function login(AssertedRequest $request): Response|JsonResponse
     {
         try {
             if ($request->login()) {
