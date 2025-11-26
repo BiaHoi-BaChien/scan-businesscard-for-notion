@@ -12,7 +12,7 @@
                             <strong>{{ $user->username }}</strong><br>
                         </div>
                         <span>{{ $user->is_admin ? 'ADMIN' : 'USER' }}</span>
-                        <span>@if($user->hasPasskey())<span class="badge">パスキー登録済</span>@endif</span>
+                        <span>@if($user->hasPasskey())<span class="badge">パスキー登録済み</span>@endif</span>
                         <form method="POST" action="{{ route('users.destroy', $user) }}" onsubmit="return confirm('削除しますか？');">
                             @csrf @method('DELETE')
                             <button type="submit" class="secondary">削除</button>
