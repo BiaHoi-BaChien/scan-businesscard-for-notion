@@ -83,6 +83,21 @@ class BusinessCardControllerTest extends TestCase
         });
     }
 
+    public function test_push_to_notion_requires_configuration(): void
+    {
+        $user = $this->createUser();
+
+        Http::fake();
+
+        $response = $this->actingAs($user)
+            ->withSession(['analysis' => ['name' => '山田 太郎']])
+            ->post(route('cards.notion'));
+
+        $response->assertStatus(302);
+        $response->assertSessionHasErrors('notion');
+        Http::assertNothingSent();
+    }
+
     private function createUser(): User
     {
         $secret = env('AUTH_SECRET', config('app.key')) ?: 'test-secret';
