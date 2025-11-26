@@ -113,7 +113,7 @@ class BusinessCardController extends Controller
     {
         $analysis = session('analysis') ?? [];
         if (! $analysis) {
-            return back()->withErrors(['notion' => '解析結果がありません']);
+            return $this->respondWithValidationError($request, ['notion' => '解析結果がありません']);
         }
 
         $apiKey = config('services.notion.api_key');
@@ -121,7 +121,7 @@ class BusinessCardController extends Controller
         $notionVersion = config('services.notion.version');
 
         if (blank($apiKey) || blank($dataSourceId) || blank($notionVersion)) {
-            return back()->withErrors([
+            return $this->respondWithValidationError($request, [
                 'notion' => 'Notionの設定が不足しています',
             ]);
         }
@@ -201,7 +201,7 @@ class BusinessCardController extends Controller
         }
 
         if (! $response->ok()) {
-            return back()->withErrors(['notion' => 'Notion登録に失敗しました: '.$response->body()]);
+            return $this->respondWithValidationError($request, ['notion' => 'Notion登録に失敗しました: '.$response->body()]);
         }
 
         return back()->with('status', 'Notionへの登録が完了しました')
@@ -224,5 +224,14 @@ class BusinessCardController extends Controller
             'phone_number' => ['phone_number' => $value ?: null],
             default => ['rich_text' => [['text' => ['content' => (string) ($value ?? '')]]]],
         };
+    }
+
+    private function respondWithValidationError(Request $request, array $messages)
+    {
+        if ($request->expectsJson()) {
+            throw ValidationException::withMessages($messages);
+        }
+
+        return back()->withErrors($messages);
     }
 }

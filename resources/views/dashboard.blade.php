@@ -202,6 +202,18 @@
                         return;
                     }
 
+                    if (response.status === 422) {
+                        const data = await response.json();
+                        const errors = Object.values(data.errors || {}).flat();
+                        alert(errors.join('\n') || '入力内容を確認してください');
+                        return;
+                    }
+
+                    if (!response.ok) {
+                        alert('エラーが発生しました。時間をおいて再度お試しください');
+                        return;
+                    }
+
                     this.success(event);
                     window.location.reload();
                 } catch (e) {
