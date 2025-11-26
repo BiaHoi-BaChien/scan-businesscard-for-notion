@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\WebAuthn;
 
+use App\Models\User;
 use Illuminate\Contracts\Support\Responsable;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Response;
@@ -19,7 +20,23 @@ class WebAuthnLoginController
      */
     public function options(AssertionRequest $request): Responsable
     {
-        return $request->toVerify($request->validate(['username' => 'sometimes|string']));
+        $data = $request->validate(['username' => 'required|string']);
+
+        $user = \App\Models\User::where('username', $data['username'])->first();
+
+        if (! $user) {
+            Log::warning('WebAuthn login attempt for unknown user', [
+                'username' => $data['username'],
+                'user_agent' => $request->userAgent(),
+                'ip' => $request->ip(),
+            ]);
+
+            return response()->json([
+                'message' => 'ユーザー名が正しくありません。',
+            ], 422);
+        }
+
+        return $request->toVerify(['username' => $user->username]);
     }
 
     /**
