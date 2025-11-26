@@ -259,12 +259,18 @@ class Webpass {
      * @return {{response: {string}, rawId: string, id: string, type: string}}
      */
     #parseOutgoingCredentials(credentials) {
+        if (!credentials || typeof credentials !== 'object') {
+            throw new TypeError('Received invalid credentials.');
+        }
+
+        const response = credentials.response ?? {};
+
         let parseCredentials = {
             id: credentials.id,
             type: credentials.type,
             rawId: Webpass.#arrayToBase64String(credentials.rawId),
             authenticatorAttachment: credentials.authenticatorAttachment,
-            clientExtensionResults: credentials.getClientExtensionResults(),
+            clientExtensionResults: credentials.getClientExtensionResults?.() ?? {},
             response: {},
         }
 
@@ -275,8 +281,8 @@ class Webpass {
             "signature",
             "userHandle"
         ]
-            .filter(key => key in credentials.response)
-            .forEach(key => parseCredentials.response[key] = Webpass.#arrayToBase64String(credentials.response[key]));
+            .filter(key => key in response)
+            .forEach(key => parseCredentials.response[key] = Webpass.#arrayToBase64String(response[key]));
 
         return parseCredentials;
     }
