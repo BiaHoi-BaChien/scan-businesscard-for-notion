@@ -4,8 +4,10 @@ namespace App\Http\Controllers\WebAuthn;
 
 use Illuminate\Contracts\Support\Responsable;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Log;
 use Laragear\WebAuthn\Http\Requests\AttestationRequest;
 use Laragear\WebAuthn\Http\Requests\AttestedRequest;
+use Throwable;
 
 use function response;
 
@@ -28,7 +30,22 @@ class WebAuthnRegisterController
      */
     public function register(AttestedRequest $request): Response
     {
-        $request->save();
+        try {
+            $request->save();
+        } catch (Throwable $exception) {
+            if (config('app.debug')) {
+                Log::error('WebAuthn registration failed', [
+                    'message' => $exception->getMessage(),
+                    'code' => $exception->getCode(),
+                    'user_id' => optional($request->user())->id,
+                    'exception' => $exception,
+                ]);
+            }
+
+            return response()->json([
+                'message' => 'パスキーの登録に失敗しました。',
+            ], 500);
+        }
 
         return response()->noContent();
     }

@@ -285,6 +285,24 @@
                 alert('パスキーを登録しました');
                 window.location.reload();
             } catch (e) {
+                if (window.appDebug) {
+                    if (e instanceof Response) {
+                        try {
+                            const body = await e.clone().text();
+                            console.error('Passkey registration failed', {
+                                status: e.status,
+                                statusText: e.statusText,
+                                body,
+                            });
+                        } catch (logError) {
+                            console.error('Passkey registration failed', e);
+                            console.error('Failed to read error response body', logError);
+                        }
+                    } else {
+                        console.error('Passkey registration failed', e);
+                    }
+                }
+
                 registerButton.disabled = false;
                 registerButton.textContent = original;
                 alert('パスキー登録に失敗しました。再度お試しください。');
