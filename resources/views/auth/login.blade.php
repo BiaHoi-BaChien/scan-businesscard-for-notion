@@ -47,6 +47,8 @@
                 await window.webpassClient.login({username: usernameInput.value});
                 window.location.href = "{{ route('dashboard') }}";
             } catch (e) {
+                let message = 'パスキー認証に失敗しました。再度お試しください。';
+
                 if (window.appDebug) {
                     if (e instanceof Response) {
                         try {
@@ -56,6 +58,13 @@
                                 statusText: e.statusText,
                                 body,
                             });
+
+                            try {
+                                const parsed = JSON.parse(body);
+                                message = parsed.message ?? message;
+                            } catch (_) {
+                                // Ignore JSON parse errors and fall back to the default message
+                            }
                         } catch (logError) {
                             console.error('Passkey login failed', e);
                             console.error('Failed to read error response body', logError);
@@ -67,7 +76,7 @@
 
                 button.textContent = originalText;
                 button.disabled = false;
-                alert('パスキー認証に失敗しました。再度お試しください。');
+                alert(message);
             }
         });
     });
