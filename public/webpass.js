@@ -263,7 +263,9 @@ class Webpass {
             throw new TypeError('Received invalid credentials.');
         }
 
-        const response = credentials.response ?? {};
+        const response = (credentials.response && typeof credentials.response === 'object')
+            ? credentials.response
+            : {};
 
         let parseCredentials = {
             id: credentials.id,
@@ -274,15 +276,19 @@ class Webpass {
             response: {},
         }
 
-        [
+        const responseKeys = [
             "clientDataJSON",
             "attestationObject",
             "authenticatorData",
             "signature",
             "userHandle"
-        ]
-            .filter(key => key in response)
-            .forEach(key => parseCredentials.response[key] = Webpass.#arrayToBase64String(response[key]));
+        ];
+
+        for (const key of responseKeys) {
+            if (!(key in response)) continue;
+
+            parseCredentials.response[key] = Webpass.#arrayToBase64String(response[key]);
+        }
 
         return parseCredentials;
     }
