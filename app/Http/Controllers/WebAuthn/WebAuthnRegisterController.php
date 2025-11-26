@@ -33,14 +33,13 @@ class WebAuthnRegisterController
         try {
             $request->save();
         } catch (Throwable $exception) {
-            if (config('app.debug')) {
-                Log::error('WebAuthn registration failed', [
-                    'message' => $exception->getMessage(),
-                    'code' => $exception->getCode(),
-                    'user_id' => optional($request->user())->id,
-                    'exception' => $exception,
-                ]);
-            }
+            Log::error('WebAuthn registration failed', [
+                'message' => $exception->getMessage(),
+                'code' => $exception->getCode(),
+                'user_id' => optional($request->user())->id,
+                'user_agent' => $request->userAgent(),
+                'exception' => $exception,
+            ]);
 
             return response()->json([
                 'message' => 'パスキーの登録に失敗しました。',
