@@ -25,7 +25,7 @@
         const button = document.getElementById('webauthn-login');
         if (!button) return;
 
-        if (!window.webauthnClient) {
+        if (!window.webpassClient) {
             button.disabled = true;
             button.textContent = 'このブラウザはパスキー非対応';
             return;
@@ -44,7 +44,7 @@
             button.textContent = 'パスキーで認証中…';
 
             try {
-                await window.webauthnClient.login({username: usernameInput.value});
+                await window.webpassClient.login({username: usernameInput.value});
                 window.location.href = "{{ route('dashboard') }}";
             } catch (e) {
                 button.textContent = originalText;
