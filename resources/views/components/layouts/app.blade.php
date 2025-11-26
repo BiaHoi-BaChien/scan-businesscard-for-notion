@@ -8,6 +8,20 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
     <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
     <script src="{{ asset('webauthn.js') }}"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            if (window.webauthnClient) return;
+
+            const supportsPasskey = 'PublicKeyCredential' in window && typeof WebAuthn !== 'undefined';
+            if (!supportsPasskey) return;
+
+            try {
+                window.webauthnClient = new WebAuthn();
+            } catch (error) {
+                console.warn('Failed to initialize WebAuthn client', error);
+            }
+        });
+    </script>
     <style>
         :root {
             --bg: #f4f8f3;
