@@ -284,6 +284,15 @@
                 alert('パスキーを登録しました');
                 window.location.reload();
             } catch (e) {
+                const isAlreadyRegistered = e && e.name === 'InvalidStateError';
+
+                if (isAlreadyRegistered) {
+                    alert('この端末はすでにパスキー登録済みです。登録済みのパスキーをお使いください。');
+                    registerButton.disabled = false;
+                    registerButton.textContent = original;
+                    return;
+                }
+
                 if (window.appDebug) {
                     if (e instanceof Response) {
                         try {
