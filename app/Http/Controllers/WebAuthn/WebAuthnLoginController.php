@@ -4,8 +4,10 @@ namespace App\Http\Controllers\WebAuthn;
 
 use Illuminate\Contracts\Support\Responsable;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Log;
 use Laragear\WebAuthn\Http\Requests\AssertedRequest;
 use Laragear\WebAuthn\Http\Requests\AssertionRequest;
+use Throwable;
 
 use function response;
 
@@ -24,6 +26,33 @@ class WebAuthnLoginController
      */
     public function login(AssertedRequest $request): Response
     {
-        return response()->noContent($request->login() ? 204 : 422);
+        try {
+            if ($request->login()) {
+                return response()->noContent();
+            }
+
+            Log::warning('WebAuthn login rejected', [
+                'username' => $request->input('username'),
+                'user_agent' => $request->userAgent(),
+                'ip' => $request->ip(),
+            ]);
+
+            return response()->json([
+                'message' => 'パスキー認証に失敗しました。再度お試しください。',
+            ], 422);
+        } catch (Throwable $exception) {
+            Log::error('WebAuthn login failed', [
+                'message' => $exception->getMessage(),
+                'code' => $exception->getCode(),
+                'username' => $request->input('username'),
+                'user_agent' => $request->userAgent(),
+                'ip' => $request->ip(),
+                'exception' => $exception,
+            ]);
+
+            return response()->json([
+                'message' => 'パスキー認証に失敗しました。管理者にお問い合わせください。',
+            ], 500);
+        }
     }
 }
