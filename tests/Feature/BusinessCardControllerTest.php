@@ -7,6 +7,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 use Tests\Concerns\CreatesTestImage;
 use Tests\TestCase;
 
@@ -136,15 +137,20 @@ class BusinessCardControllerTest extends TestCase
     {
         $user = $this->createUser();
 
+        $this->withoutExceptionHandling();
+
         Http::fake();
 
-        $response = $this->actingAs($user)
-            ->withSession(['analysis' => ['name' => '山田 太郎']])
-            ->post(route('cards.notion'));
+        $this->expectException(ValidationException::class);
+        $this->expectExceptionMessage('Notionの設定が不足しています');
 
-        $response->assertStatus(302);
-        $response->assertSessionHasErrors('notion');
-        Http::assertNothingSent();
+        try {
+            $this->actingAs($user)
+                ->withSession(['analysis' => ['name' => '山田 太郎']])
+                ->post(route('cards.notion'));
+        } finally {
+            Http::assertNothingSent();
+        }
     }
 
     private function createUser(): User

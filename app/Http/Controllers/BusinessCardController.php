@@ -125,7 +125,7 @@ class BusinessCardController extends Controller
         $notionVersion = config('services.notion.version');
 
         if (blank($apiKey) || blank($dataSourceId) || blank($notionVersion)) {
-            return back()->withErrors([
+            throw ValidationException::withMessages([
                 'notion' => 'Notionの設定が不足しています',
             ]);
         }
