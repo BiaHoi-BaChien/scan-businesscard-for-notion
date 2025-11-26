@@ -115,6 +115,14 @@ class BusinessCardController extends Controller
             return back()->withErrors(['notion' => '解析結果がありません']);
         }
 
+        $apiKey = config('services.notion.api_key');
+        $dataSourceId = config('services.notion.data_source_id');
+        $notionVersion = config('services.notion.version');
+
+        if (! $apiKey || ! $dataSourceId || ! $notionVersion) {
+            return back()->withErrors(['notion' => 'Notionの設定が不足しています']);
+        }
+
         $fields = [
             'name',
             'job_title',
@@ -171,13 +179,13 @@ class BusinessCardController extends Controller
         }
 
         $response = Http::withHeaders([
-            'Authorization' => 'Bearer '.config('services.notion.api_key'),
-            'Notion-Version' => config('services.notion.version'),
+            'Authorization' => 'Bearer '.$apiKey,
+            'Notion-Version' => $notionVersion,
             'Content-Type' => 'application/json',
         ])->post('https://api.notion.com/v1/pages', [
             'parent' => [
                 'type' => 'data_source_id',
-                'data_source_id' => config('services.notion.data_source_id'),
+                'data_source_id' => $dataSourceId,
             ],
             'properties' => $payloadProperties,
         ]);
