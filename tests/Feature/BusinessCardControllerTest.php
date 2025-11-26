@@ -41,6 +41,25 @@ class BusinessCardControllerTest extends TestCase
         Http::assertNothingSent();
     }
 
+    public function test_analyze_clears_analysis_session_when_openai_returns_server_error(): void
+    {
+        $user = $this->createUser();
+        config(['services.openai.api_key' => 'test-key']);
+        Http::fake([
+            'https://api.openai.com/*' => Http::response([], 500),
+        ]);
+
+        $response = $this->actingAs($user)
+            ->withSession(['analysis' => ['name' => '旧データ']])
+            ->post(route('cards.analyze'), [
+                'front' => $this->createTestImage('front.png'),
+            ]);
+
+        $response->assertStatus(302);
+        $response->assertSessionHasErrors('analyze');
+        $this->assertNull(session('analysis'));
+    }
+
     public function test_push_to_notion_builds_properties_from_analysis_and_skips_unmapped_fields(): void
     {
         $user = $this->createUser();
@@ -80,6 +99,36 @@ class BusinessCardControllerTest extends TestCase
                 && ($properties['会社名']['rich_text'][0]['text']['content'] ?? null) === 'ACME Inc.'
                 && ($properties['役職']['rich_text'][0]['text']['content'] ?? null) === 'CTO'
                 && ! array_key_exists('custom_field', $properties);
+        });
+    }
+
+    public function test_push_to_notion_trims_input_overrides_before_sending_request(): void
+    {
+        $user = $this->createUser();
+        config([
+            'services.notion.api_key' => 'test-key',
+            'services.notion.data_source_id' => 'test-database',
+            'services.notion.version' => '2025-09-03',
+        ]);
+
+        Http::fake([
+            'https://api.notion.com/v1/pages' => Http::response(['id' => 'page_123'], 200),
+        ]);
+
+        $response = $this->actingAs($user)
+            ->withSession(['analysis' => ['name' => '山田 太郎', 'job_title' => 'Developer']])
+            ->post(route('cards.notion'), [
+                'job_title' => ' CTO ',
+            ]);
+
+        $response->assertStatus(302);
+        $this->assertSame('CTO', session('analysis.job_title'));
+
+        Http::assertSent(function ($request) {
+            $properties = $request->data()['properties'] ?? [];
+
+            return $request->url() === 'https://api.notion.com/v1/pages'
+                && ($properties['役職']['rich_text'][0]['text']['content'] ?? null) === 'CTO';
         });
     }
 

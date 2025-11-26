@@ -60,6 +60,8 @@ class BusinessCardController extends Controller
         ]);
 
         if (! $response->ok()) {
+            session()->forget('analysis');
+
             return back()->withErrors(['analyze' => '解析に失敗しました: '.$response->status()]);
         }
 
