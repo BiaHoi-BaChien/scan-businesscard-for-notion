@@ -19,7 +19,9 @@ class WebAuthnLoginController
      */
     public function options(AssertionRequest $request): Responsable
     {
-        return $request->toVerify(array_filter($request->only('username')));
+        return $request
+            ->userless()
+            ->toVerify(array_filter($request->only('username')));
     }
 
     /**
