@@ -357,8 +357,7 @@ class Webpass {
         const publicKeyCredential = this.#parseOutgoingCredentials(credentials);
 
         Object.assign(publicKeyCredential, response);
-
-        console.log(publicKeyCredential);
+        Object.assign(publicKeyCredential, request);
 
         return await this.#fetch(publicKeyCredential, this.#routes.login, response).then(Webpass.#handleResponse);
     }
