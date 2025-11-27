@@ -21,8 +21,8 @@ class WebAuthnRegisterController
     {
         return $request
             ->fastRegistration()
-//            ->userless()
-//            ->allowDuplicates()
+            ->userless()
+            ->allowDuplicates()
             ->toCreate();
     }
 
