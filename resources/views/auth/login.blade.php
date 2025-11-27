@@ -23,6 +23,7 @@
 <script>
     document.addEventListener('DOMContentLoaded', () => {
         const button = document.getElementById('webauthn-login');
+        const usernameInput = document.querySelector('input[name="username"]');
         if (!button) return;
 
         if (!window.webpassClient) {
@@ -36,14 +37,29 @@
             const originalText = button.textContent;
             button.textContent = 'パスキーで認証中…';
 
+            const request = {};
+            const username = usernameInput?.value.trim();
+            if (username) {
+                request.username = username;
+            }
+
             try {
-                await window.webpassClient.login();
+                await window.webpassClient.login(request);
                 window.location.href = "{{ route('dashboard') }}";
             } catch (e) {
+                let errorMessage = 'パスキー認証に失敗しました。再度お試しください。';
+
                 if (window.appDebug) {
                     if (e instanceof Response) {
                         try {
-                            const body = await e.clone().text();
+                            const cloned = e.clone();
+                            const body = await cloned.text();
+                            const json = JSON.parse(body);
+
+                            if (typeof json?.message === 'string' && json.message.trim() !== '') {
+                                errorMessage = json.message;
+                            }
+
                             console.error('Passkey login failed', {
                                 status: e.status,
                                 statusText: e.statusText,
@@ -60,7 +76,7 @@
 
                 button.textContent = originalText;
                 button.disabled = false;
-                alert('パスキー認証に失敗しました。再度お試しください。');
+                alert(errorMessage);
             }
         });
     });
