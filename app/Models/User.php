@@ -2,7 +2,6 @@
 
 namespace App\Models;
 
-use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -48,8 +47,6 @@ class User extends Authenticatable implements WebAuthnAuthenticatable
 
     public function webAuthnData(): WebAuthnData
     {
-        // WebAuthn requires a stable, per-user identifier; using APP_URL here would
-        // cause all users to share the same handle and break passkey validation.
         return WebAuthnData::make($this->username, $this->username);
     }
 
