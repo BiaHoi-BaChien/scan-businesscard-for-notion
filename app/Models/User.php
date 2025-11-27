@@ -48,7 +48,9 @@ class User extends Authenticatable implements WebAuthnAuthenticatable
 
     public function webAuthnData(): WebAuthnData
     {
-        return WebAuthnData::make($this->email ?? "{$this->username}@example.test", $this->username);
+        // WebAuthn requires a stable, per-user identifier; using APP_URL here would
+        // cause all users to share the same handle and break passkey validation.
+        return WebAuthnData::make($this->username, $this->username);
     }
 
     public function webAuthnId(): UuidInterface
