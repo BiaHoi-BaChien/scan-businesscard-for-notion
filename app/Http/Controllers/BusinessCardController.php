@@ -9,6 +9,9 @@ use Illuminate\Validation\ValidationException;
 
 class BusinessCardController extends Controller
 {
+    private string $browserUserAgent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 '
+        .'(KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36';
+
     // 画像を保存せず、そのままOpenAIに渡して解析する
     public function analyze(Request $request)
     {
@@ -48,7 +51,9 @@ class BusinessCardController extends Controller
 
         $encodedImages = array_map(fn ($path) => base64_encode(file_get_contents($path)), $images);
         session()->forget('analysis');
-        $response = Http::withToken($apiKey)->post('https://api.openai.com/v1/chat/completions', [
+        $response = Http::withHeaders([
+            'User-Agent' => $this->browserUserAgent,
+        ])->withToken($apiKey)->post('https://api.openai.com/v1/chat/completions', [
             'model' => 'gpt-4o-mini',
             'messages' => [
                 ['role' => 'system', 'content' => 'Extract business card fields and answer in JSON.'],
@@ -189,6 +194,7 @@ class BusinessCardController extends Controller
             'Authorization' => 'Bearer '.$apiKey,
             'Notion-Version' => $notionVersion,
             'Content-Type' => 'application/json',
+            'User-Agent' => $this->browserUserAgent,
         ])->post('https://api.notion.com/v1/pages', [
             'parent' => [
                 'type' => 'data_source_id',
