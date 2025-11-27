@@ -16,7 +16,7 @@
         </form>
         <div class="grid" style="margin-top:1rem;">
             <button type="button" id="webauthn-login" class="secondary">パスキーでログイン</button>
-            <p class="muted" style="margin:0;">ブラウザや端末の生体認証でログインします。</p>
+            <p class="muted" style="margin:0;">ブラウザや端末の生体認証でログインします。ユーザー名の入力は不要です。</p>
         </div>
     </article>
 </x-layouts.app>
@@ -31,20 +31,13 @@
             return;
         }
 
-        const usernameInput = document.querySelector('input[name="username"]');
-
         button.addEventListener('click', async () => {
-            if (!usernameInput.value) {
-                alert('ユーザー名を入力してください');
-                return;
-            }
-
             button.disabled = true;
             const originalText = button.textContent;
             button.textContent = 'パスキーで認証中…';
 
             try {
-                await window.webpassClient.login({username: usernameInput.value});
+                await window.webpassClient.login();
                 window.location.href = "{{ route('dashboard') }}";
             } catch (e) {
                 if (window.appDebug) {

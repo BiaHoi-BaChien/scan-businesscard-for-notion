@@ -19,7 +19,7 @@ class WebAuthnLoginController
      */
     public function options(AssertionRequest $request): Responsable
     {
-        return $request->toVerify($request->validate(['username' => 'sometimes|string']));
+        return $request->toVerify(array_filter($request->only('username')));
     }
 
     /**
