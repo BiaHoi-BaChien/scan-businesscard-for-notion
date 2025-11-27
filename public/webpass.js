@@ -225,6 +225,14 @@ class Webpass {
      * @returns {Object}
      */
     #parseIncomingServerOptions(publicKey) {
+        if (!publicKey || typeof publicKey !== 'object') {
+            throw new TypeError('Received invalid PublicKey options.');
+        }
+
+        if (!publicKey.challenge) {
+            throw new TypeError('Received PublicKey options without a challenge.');
+        }
+
         console.debug(publicKey);
 
         publicKey.challenge = Webpass.#uint8Array(publicKey.challenge);
@@ -329,8 +337,8 @@ class Webpass {
      */
     async register(request = {}, response = {}) {
         const optionsResponse = await this.#fetch(request, this.#routes.registerOptions);
-        const json = await optionsResponse.json();
-        const publicKey = this.#parseIncomingServerOptions(json);
+        const options = await Webpass.#handleResponse(optionsResponse);
+        const publicKey = this.#parseIncomingServerOptions(options);
         const credentials = await navigator.credentials.create({publicKey});
         const publicKeyCredential = this.#parseOutgoingCredentials(credentials);
 
@@ -351,8 +359,8 @@ class Webpass {
      */
     async login(request = {}, response = {}) {
         const optionsResponse = await this.#fetch(request, this.#routes.loginOptions);
-        const json = await optionsResponse.json();
-        const publicKey = this.#parseIncomingServerOptions(json);
+        const options = await Webpass.#handleResponse(optionsResponse);
+        const publicKey = this.#parseIncomingServerOptions(options);
         const credentials = await navigator.credentials.get({publicKey});
         const publicKeyCredential = this.#parseOutgoingCredentials(credentials);
 
