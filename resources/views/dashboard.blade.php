@@ -140,7 +140,6 @@
             <article class="panel">
                 <header class="grid" style="gap:0.25rem;">
                     <h3 style="margin:0;">ユーザー管理</h3>
-                    <p class="muted" style="margin:0;">追加・更新・削除</p>
                 </header>
                 <a href="{{ route('users.index') }}" role="button" class="secondary">管理画面へ</a>
             </article>
