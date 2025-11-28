@@ -60,6 +60,8 @@
                         try {
                             const cloned = e.clone();
                             const body = await cloned.text();
+                            const headers = Object.fromEntries(cloned.headers.entries());
+                            const timestamp = new Date().toISOString();
                             const json = JSON.parse(body);
 
                             if (typeof json?.message === 'string' && json.message.trim() !== '') {
@@ -70,6 +72,9 @@
                                 status: e.status,
                                 statusText: e.statusText,
                                 body,
+                                headers,
+                                timestamp,
+                                request,
                             });
                         } catch (logError) {
                             console.error('Passkey login failed', e);

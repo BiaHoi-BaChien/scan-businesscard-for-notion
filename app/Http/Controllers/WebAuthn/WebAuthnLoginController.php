@@ -37,6 +37,7 @@ class WebAuthnLoginController
                 'username' => $request->input('username'),
                 'user_agent' => $request->userAgent(),
                 'ip' => $request->ip(),
+                'assertion_summary' => $this->buildAssertionSummary($request),
             ]);
 
             return response()->json([
@@ -49,6 +50,7 @@ class WebAuthnLoginController
                 'username' => $request->input('username'),
                 'user_agent' => $request->userAgent(),
                 'ip' => $request->ip(),
+                'assertion_summary' => $this->buildAssertionSummary($request),
                 'exception' => $exception,
             ]);
 
@@ -56,5 +58,31 @@ class WebAuthnLoginController
                 'message' => 'パスキー認証に失敗しました。管理者にお問い合わせください。',
             ], 500);
         }
+    }
+
+    /**
+     * Build a sanitized summary of the incoming assertion payload for debugging.
+     */
+    private function buildAssertionSummary(AssertedRequest $request): array
+    {
+        $assertion = $request->input('assertion', []);
+
+        return [
+            'id' => $assertion['id'] ?? null,
+            'raw_id_length' => isset($assertion['rawId']) ? strlen($assertion['rawId']) : null,
+            'response_fields' => array_keys($assertion['response'] ?? []),
+            'client_data_length' => isset($assertion['response']['clientDataJSON'])
+                ? strlen($assertion['response']['clientDataJSON'])
+                : null,
+            'authenticator_data_length' => isset($assertion['response']['authenticatorData'])
+                ? strlen($assertion['response']['authenticatorData'])
+                : null,
+            'signature_length' => isset($assertion['response']['signature'])
+                ? strlen($assertion['response']['signature'])
+                : null,
+            'user_handle_present' => isset($assertion['response']['userHandle'])
+                ? $assertion['response']['userHandle'] !== null
+                : null,
+        ];
     }
 }
