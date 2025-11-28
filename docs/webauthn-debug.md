@@ -73,3 +73,23 @@
 - 422 応答が返る前に、ブラウザの Network タブで `/webauthn/login` リクエストの `Request Payload` に `assertion.response` フィールドが入っているかを確認します。ここで空ならフロント側送信が欠落、入っているのにサーバーで空ならミドルウェアやボディパーサーで落ちている可能性があります。
 
 ログに `rp_id` と `origin` が並んで表示されますが、RP ID はホスト名のみ、オリジンはスキーム＋ホスト（＋ポート）であるため、値が異なるように見えても仕様上問題ありません。RP ID ハッシュの一致可否（`rp_id_hash_matches_expected`）が `true` かどうかを基準に確認してください。
+
+## 今回のログ例から読み取れること
+該当ログでは以下が同時に発生しており、サーバーが検証を開始できない状態です。
+
+- `session_challenge` が `null`、`session_has_challenge` が `false` → 認証開始時に発行したチャレンジがセッションに存在しない。セッション Cookie が送信されていない、またはチャレンジ保存前にセッションが破棄された可能性があります。
+- `assertion_present` が `false`、`client_data` / `authenticator_data` が空配列 → ブラウザからアサーション本体（`clientDataJSON` や `authenticatorData`）が届いていない。`navigator.credentials.get()` が呼ばれていない、もしくは署名データを含まないリクエストが送信されている可能性があります。
+
+### 対応の優先順位（具体的な確認手順）
+1. **チャレンジ発行 API 呼び出し後の Cookie を確認する**
+   1. DevTools `Network` タブでチャレンジ発行 API（例: `/webauthn/login/options` など認証開始エンドポイント）を選択。
+   2. `Headers` → `Response Headers` から `Set-Cookie` を確認し、セッション Cookie が返却されているかを見る。
+   3. その Cookie に `Secure` と `SameSite=None`（クロスサイトなら必須）が付いているか、`Domain`/`Path` がオリジンに一致しているかをチェック。
+2. **実際の認証リクエストで Cookie が送られているか確認する**
+   1. 同じく `Network` タブで `/webauthn/login` を選択。
+   2. `Headers` → `Request Headers` の `Cookie` 行を開き、1 で確認したセッション Cookie が含まれているか確認する。
+   3. ここにセッション Cookie が無ければ、ブラウザ設定（iOS Safari のトラッキング防止やプライベートモード）、HTTPS 設定、またはドメイン属性の誤りを疑う。
+3. **`navigator.credentials.get()` でチャレンジを渡しているか検証する**
+   1. 画面で「パスキーでログイン」を押す直前に DevTools `Sources` で `public/webpass.js` を開き、`navigator.credentials.get({ publicKey })` の行にブレークポイントを置く。
+   2. ブレーク後、`publicKey.challenge` を展開して値が入っているかを確認（Base64Url 文字列で入っていれば OK）。
+   3. `Network` タブで `/webauthn/login` リクエストの `Payload` を開き、`response.clientDataJSON` / `authenticatorData` / `signature` が送られているかを確認する。ここが空の場合、`navigator.credentials.get()` が呼ばれていないか、返却値を送信していない可能性が高い。
