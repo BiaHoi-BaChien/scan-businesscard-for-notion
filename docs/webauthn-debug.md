@@ -85,6 +85,7 @@
    1. DevTools `Network` タブでチャレンジ発行 API（例: `/webauthn/login/options` など認証開始エンドポイント）を選択。
    2. `Headers` → `Response Headers` から `Set-Cookie` を確認し、セッション Cookie が返却されているかを見る。
    3. その Cookie に `Secure` と `SameSite=None`（クロスサイトなら必須）が付いているか、`Domain`/`Path` がオリジンに一致しているかをチェック。
+      - Laravel 既定の `SESSION_SAME_SITE` は `lax` なので、クロスサイト認証なら `.env` で `SESSION_SAME_SITE=none`（かつ `SESSION_SECURE_COOKIE=true`）に変更する。
 2. **実際の認証リクエストで Cookie が送られているか確認する**
    1. 同じく `Network` タブで `/webauthn/login` を選択。
    2. `Headers` → `Request Headers` の `Cookie` 行を開き、1 で確認したセッション Cookie が含まれているか確認する。
