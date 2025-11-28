@@ -14,6 +14,31 @@ $appScheme = parse_url($appUrl, PHP_URL_SCHEME) ?: 'https';
 
 $defaultOrigin = $appHost ? sprintf('%s://%s', $appScheme, $appHost) : null;
 
+if (! $defaultOrigin) {
+    $forwardedProto = $_SERVER['HTTP_X_FORWARDED_PROTO'] ?? null;
+    $forwardedHost = $_SERVER['HTTP_X_FORWARDED_HOST'] ?? null;
+
+    if ($forwardedProto || $forwardedHost) {
+        $scheme = $forwardedProto ? trim(explode(',', $forwardedProto)[0]) : null;
+        $host = $forwardedHost ? trim(explode(',', $forwardedHost)[0]) : null;
+
+        $scheme ??= (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
+        $host ??= $_SERVER['HTTP_HOST'] ?? null;
+
+        if ($host) {
+            $defaultOrigin = sprintf('%s://%s', $scheme, $host);
+        }
+    }
+}
+
+if (! $defaultOrigin && function_exists('request')) {
+    $request = request();
+
+    if ($request) {
+        $defaultOrigin = $request->getSchemeAndHttpHost();
+    }
+}
+
 if (! $defaultOrigin && isset($_SERVER['HTTP_HOST'])) {
     $isSecure = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off';
     $defaultOrigin = sprintf('%s://%s', $isSecure ? 'https' : 'http', $_SERVER['HTTP_HOST']);
