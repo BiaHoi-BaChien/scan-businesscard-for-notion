@@ -5,6 +5,20 @@
 // configured host (or a missing `WEBAUTHN_ID`) doesn't match the actual domain being used.
 $defaultRelyingPartyId = parse_url(config('app.url'), PHP_URL_HOST) ?: ($_SERVER['HTTP_HOST'] ?? null);
 
+// Build a default origin (scheme + host) for WebAuthn ceremonies. If the application URL is
+// unavailable or misconfigured, fall back to the current request host to avoid 422 errors caused
+// by origin mismatches when serving the app from a different domain or subdirectory.
+$appUrl = config('app.url');
+$appHost = parse_url($appUrl, PHP_URL_HOST);
+$appScheme = parse_url($appUrl, PHP_URL_SCHEME) ?: 'https';
+
+$defaultOrigin = $appHost ? sprintf('%s://%s', $appScheme, $appHost) : null;
+
+if (! $defaultOrigin && isset($_SERVER['HTTP_HOST'])) {
+    $isSecure = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off';
+    $defaultOrigin = sprintf('%s://%s', $isSecure ? 'https' : 'http', $_SERVER['HTTP_HOST']);
+}
+
 return [
 
     /*
@@ -35,7 +49,7 @@ return [
     | For multiple origins, separate them using comma, like `foo,bar`.
     */
 
-    'origins' => env('WEBAUTHN_ORIGINS', config('app.url')),
+    'origins' => env('WEBAUTHN_ORIGINS', $defaultOrigin),
 
     /*
     |--------------------------------------------------------------------------
