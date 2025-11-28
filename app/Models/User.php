@@ -47,7 +47,7 @@ class User extends Authenticatable implements WebAuthnAuthenticatable
 
     public function webAuthnData(): WebAuthnData
     {
-        return WebAuthnData::make($this->username, $this->username);
+        return WebAuthnData::make($this->username, config('app.name'));
     }
 
     public function webAuthnId(): UuidInterface
