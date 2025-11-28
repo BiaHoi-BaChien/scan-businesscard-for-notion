@@ -106,14 +106,27 @@ class WebAuthnLoginController
         $expectedOrigins = config('webauthn.origins');
         $expectedOriginList = is_array($expectedOrigins) ? array_values($expectedOrigins) : [$expectedOrigins];
         $expectedRpIdHashHex = $expectedRpId ? hash('sha256', $expectedRpId) : null;
+        $sessionChallenge = $this->extractSessionChallenge($request);
+
+        $payloadInspection = [
+            'payload_keys' => array_keys($request->all()),
+            'assertion_present' => ! empty($assertion),
+            'raw_body_length' => strlen($request->getContent()),
+            'username' => $request->input('username'),
+        ];
+
+        if (config('app.debug')) {
+            $payloadInspection['session_has_challenge'] = $sessionChallenge !== null;
+        }
 
         return [
             'expected' => [
                 'rp_id' => $expectedRpId,
                 'rp_id_hash_hex' => $expectedRpIdHashHex,
                 'origins' => $expectedOriginList,
-                'session_challenge' => $this->extractSessionChallenge($request),
+                'session_challenge' => $sessionChallenge,
             ],
+            'request_payload' => $payloadInspection,
             'client_data' => $this->parseClientDataJson($clientDataJson),
             'authenticator_data' => $this->parseAuthenticatorData($authenticatorData, $expectedRpIdHashHex),
         ];

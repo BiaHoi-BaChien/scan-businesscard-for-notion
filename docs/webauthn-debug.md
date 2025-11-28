@@ -63,3 +63,13 @@
    - `web-auth/webauthn-lib` などを使う場合、`AuthenticatorAssertionResponseValidator` に正しい入力（オリジン、RP ID、チャレンジ、登録済みクレデンシャル情報）を渡しているか確認します。
 
 これらを上から順に確認すると、クライアントは正常だがサーバー側で検証が落ちる典型的な原因を洗い出せます。サーバーログにチャレンジや `rpIdHash`、使用している公開鍵を追記すると調査が容易になります。
+
+## ログが空配列（`client_data: []` や `authenticator_data: []`）になる場合
+デバッグログに `client_data: []` や `authenticator_data: []` と出ている場合、サーバーが受け取ったリクエストにアサーション本体（`assertion.response.clientDataJSON` / `authenticatorData` など）が入っていない可能性があります。まず以下を確認してください。
+
+- `request_payload.assertion_present` が `false` になっていないか。
+- `request_payload.raw_body_length` が 0 になっていないか（フロントからデータが届いていない）。
+- `expected.session_challenge` が `null` の場合、セッションが欠落しているか、チャレンジ保存前にセッションが切れている可能性があります。`session_has_challenge` が `false` のときは、セッションストアや Cookie の送出状況を確認してください。
+- 422 応答が返る前に、ブラウザの Network タブで `/webauthn/login` リクエストの `Request Payload` に `assertion.response` フィールドが入っているかを確認します。ここで空ならフロント側送信が欠落、入っているのにサーバーで空ならミドルウェアやボディパーサーで落ちている可能性があります。
+
+ログに `rp_id` と `origin` が並んで表示されますが、RP ID はホスト名のみ、オリジンはスキーム＋ホスト（＋ポート）であるため、値が異なるように見えても仕様上問題ありません。RP ID ハッシュの一致可否（`rp_id_hash_matches_expected`）が `true` かどうかを基準に確認してください。
