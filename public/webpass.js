@@ -215,7 +215,10 @@ class Webpass {
      * @returns {string}
      */
     static #arrayToBase64String(arrayBuffer) {
-        return btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)));
+        return btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)))
+            .replaceAll("+", "-")
+            .replaceAll("/", "_")
+            .replace(/=+$/g, "");
     }
 
     /**
