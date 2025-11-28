@@ -4,9 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <link rel="icon" type="image/svg+xml" href="{{ asset('favicon.svg') }}" sizes="any">
-    <link rel="shortcut icon" type="image/svg+xml" href="{{ asset('favicon.svg') }}">
-    <link rel="apple-touch-icon" href="{{ asset('favicon.svg') }}">
+    <link rel="icon" type="image/png" href="{{ asset('favicon.png') }}" sizes="1024x1024">
+    <link rel="shortcut icon" type="image/png" href="{{ asset('favicon.png') }}">
+    <link rel="apple-touch-icon" type="image/png" sizes="1024x1024" href="{{ asset('favicon.png') }}">
     <title>{{ config('app.name') }}</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
     <script>window.appDebug = @json(config('app.debug'));</script>
