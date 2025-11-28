@@ -102,15 +102,20 @@ class WebAuthnLoginController
         $assertion = $request->input('assertion', []);
         $clientDataJson = $assertion['response']['clientDataJSON'] ?? null;
         $authenticatorData = $assertion['response']['authenticatorData'] ?? null;
+        $expectedRpId = config('webauthn.relying_party.id');
+        $expectedOrigins = config('webauthn.origins');
+        $expectedOriginList = is_array($expectedOrigins) ? array_values($expectedOrigins) : [$expectedOrigins];
+        $expectedRpIdHashHex = $expectedRpId ? hash('sha256', $expectedRpId) : null;
 
         return [
             'expected' => [
-                'rp_id' => config('webauthn.relying_party.id'),
-                'origin' => config('webauthn.origins'),
+                'rp_id' => $expectedRpId,
+                'rp_id_hash_hex' => $expectedRpIdHashHex,
+                'origins' => $expectedOriginList,
                 'session_challenge' => $this->extractSessionChallenge($request),
             ],
             'client_data' => $this->parseClientDataJson($clientDataJson),
-            'authenticator_data' => $this->parseAuthenticatorData($authenticatorData),
+            'authenticator_data' => $this->parseAuthenticatorData($authenticatorData, $expectedRpIdHashHex),
         ];
     }
 
@@ -141,7 +146,7 @@ class WebAuthnLoginController
         ];
     }
 
-    private function parseAuthenticatorData(?string $encodedAuthenticatorData): array
+    private function parseAuthenticatorData(?string $encodedAuthenticatorData, ?string $expectedRpIdHashHex = null): array
     {
         if (! $encodedAuthenticatorData) {
             return [];
@@ -160,8 +165,13 @@ class WebAuthnLoginController
             ? unpack('N', $signCountBytes)[1]
             : null;
 
+        $rpIdHashHex = $rpIdHash ? bin2hex($rpIdHash) : null;
+
         return [
-            'rp_id_hash_hex' => $rpIdHash ? bin2hex($rpIdHash) : null,
+            'rp_id_hash_hex' => $rpIdHashHex,
+            'rp_id_hash_matches_expected' => $expectedRpIdHashHex && $rpIdHashHex
+                ? hash_equals($expectedRpIdHashHex, $rpIdHashHex)
+                : null,
             'flags' => [
                 'user_present' => (bool) ($flagsByte & 0b00000001),
                 'user_verified' => (bool) ($flagsByte & 0b00000100),

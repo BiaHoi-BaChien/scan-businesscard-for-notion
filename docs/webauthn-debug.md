@@ -55,7 +55,8 @@
 2. **署名検証で生のバイト列を使っているか**
    - `authenticatorData` と `clientDataHash` を結合した「生の bytes」を公開鍵で検証できているかを確認します。JSON 文字列や Base64 文字列のまま検証すると失敗します。
 3. **`authenticatorData` 内の `rpIdHash` が一致するか**
-   - サーバー側で計算した RP ID ハッシュと、`authenticatorData` に含まれる `rpIdHash` を比較します。ドメインやポートが変わっていないか確認してください。
+   - サーバー側で計算した RP ID ハッシュ（`hash('sha256', config('webauthn.relying_party.id'))`）と、`authenticatorData` に含まれる `rpIdHash` を比較します。ドメインやポートが変わっていないか確認してください。
+   - ログでは RP ID（例: `clb-biahoi.net`）とオリジン（例: `https://clb-biahoi.net`）は値が異なるように見えますが、仕様上問題ありません。RP ID はホスト名のみ、オリジンはスキーム＋ホスト（＋ポート）で、RP ID ハッシュが一致していれば正しいオリジン/RP ID で検証されています。
 4. **公開鍵の取り出しが正しいか**
    - 登録時に保存した COSEKey から公開鍵を正しく復元できているか確認します。アルゴリズム（例: ES256）やキー長の解釈ミスで検証に失敗することがあります。
 5. **WebAuthn ライブラリの呼び出し方に誤りがないか**
