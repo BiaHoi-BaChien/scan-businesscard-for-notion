@@ -16,7 +16,7 @@
         </form>
         <div class="grid" style="margin-top:1rem;">
             <button type="button" id="webauthn-login" class="secondary">パスキーでログイン</button>
-            <p class="muted" style="margin:0;">ブラウザや端末の生体認証でログインします。ユーザー名の入力は不要です。</p>
+            <p class="muted" style="margin:0;">ブラウザや端末の生体認証でログインします。ユーザー名を入力してから実行してください。</p>
         </div>
     </article>
 </x-layouts.app>
@@ -39,9 +39,15 @@
 
             const request = {};
             const username = usernameInput?.value.trim();
-            if (username) {
-                request.username = username;
+            if (!username) {
+                alert('パスキーでログインする前にユーザー名を入力してください。');
+                button.textContent = originalText;
+                button.disabled = false;
+                usernameInput?.focus();
+                return;
             }
+
+            request.username = username;
 
             try {
                 await window.webpassClient.login(request);
