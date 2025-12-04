@@ -8,6 +8,7 @@
 - Composer
 - Node.js / npm (もしくは pnpm/yarn)
 - SQLite3（デフォルト構成）
+  - PHP の SQLite ドライバ（`pdo_sqlite` / `sqlite3` 拡張）を有効にしてください。Windows の場合は `php.ini` で `extension=pdo_sqlite` をコメント解除し、Linux の場合は `sudo apt install php8.2-sqlite3` などで追加できます。
 
 ## セットアップ手順
 
