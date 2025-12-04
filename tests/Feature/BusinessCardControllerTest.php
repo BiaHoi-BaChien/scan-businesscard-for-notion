@@ -174,6 +174,11 @@ class BusinessCardControllerTest extends TestCase
 
         $this->withoutExceptionHandling();
 
+        config([
+            'services.notion.api_key' => null,
+            'services.notion.data_source_id' => null,
+        ]);
+
         Http::fake();
 
         $this->expectException(ValidationException::class);
