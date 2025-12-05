@@ -4,7 +4,7 @@
             <header class="grid" style="gap:0.35rem; align-items:flex-start;">
                 <div>
                     <h2 style="margin:0;">ユーザー一覧</h2>
-                    <p class="muted" style="margin:0;">登録済みユーザーの権限とパスキーを管理します。</p>
+                    <p class="muted" style="margin:0;">登録済みユーザーの権限を管理します。</p>
                 </div>
             </header>
             <ul class="user-list">
@@ -16,20 +16,7 @@
                             </div>
                             <span class="role-pill">{{ $user->is_admin ? 'ADMIN' : 'USER' }}</span>
                         </div>
-                        <div class="user-meta">
-                            @if($user->hasPasskey())
-                                <span class="badge">パスキー登録済み</span>
-                            @else
-                                <span class="muted">パスキー未登録</span>
-                            @endif
-                        </div>
                         <div class="user-actions">
-                            @if($user->hasPasskey())
-                                <form method="POST" action="{{ route('users.passkey.destroy', $user) }}" onsubmit="return confirm('登録済みのパスキーを削除しますか？');">
-                                    @csrf @method('DELETE')
-                                    <button type="submit" class="secondary">登録済みのパスキーを削除</button>
-                                </form>
-                            @endif
                             <form method="POST" action="{{ route('users.destroy', $user) }}" onsubmit="return confirm('削除しますか？');">
                                 @csrf @method('DELETE')
                                 <button type="submit" class="secondary">削除</button>

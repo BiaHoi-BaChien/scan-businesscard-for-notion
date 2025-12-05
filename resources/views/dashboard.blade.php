@@ -127,24 +127,16 @@
         </template>
     </section>
 
-    <section class="grid grid-2" style="margin-top:1.5rem; align-items:stretch;">
-        <article class="panel">
-            <h3 style="margin-bottom:0.35rem;">パスキー登録</h3>
-            <p class="muted">スマホの顔認証や指紋・PINでログインできます。</p>
-            <div class="stack gap-sm">
-                <button type="button" id="register-passkey">この端末で登録する</button>
-                <p class="muted" style="margin:0;">登録後は「パスキーでログイン」から生体認証でサインインできます。</p>
-            </div>
-        </article>
-        @if(auth()->user()->is_admin)
+    @if(auth()->user()->is_admin)
+        <section style="margin-top:1.5rem; align-items:stretch;">
             <article class="panel">
                 <header class="grid" style="gap:0.25rem;">
                     <h3 style="margin:0;">ユーザー管理</h3>
                 </header>
                 <a href="{{ route('users.index') }}" role="button" class="secondary">管理画面へ</a>
             </article>
-        @endif
-    </section>
+        </section>
+    @endif
 </x-layouts.app>
 <script>
     function deviceState() {
@@ -295,58 +287,4 @@
             }
         }
     }
-
-    document.addEventListener('DOMContentLoaded', () => {
-        const registerButton = document.getElementById('register-passkey');
-        if (!registerButton) return;
-
-        if (!window.webpassClient) {
-            registerButton.disabled = true;
-            registerButton.textContent = 'このブラウザはパスキー非対応';
-            return;
-        }
-
-        registerButton.addEventListener('click', async () => {
-            registerButton.disabled = true;
-            const original = registerButton.textContent;
-            registerButton.textContent = '登録中';
-
-            try {
-                await window.webpassClient.register();
-                alert('パスキーを登録しました');
-                window.location.reload();
-            } catch (e) {
-                const isAlreadyRegistered = e && e.name === 'InvalidStateError';
-
-                if (isAlreadyRegistered) {
-                    alert('この端末はすでにパスキー登録済みです。登録済みのパスキーをお使いください。');
-                    registerButton.disabled = false;
-                    registerButton.textContent = original;
-                    return;
-                }
-
-                if (window.appDebug) {
-                    if (e instanceof Response) {
-                        try {
-                            const body = await e.clone().text();
-                            console.error('Passkey registration failed', {
-                                status: e.status,
-                                statusText: e.statusText,
-                                body,
-                            });
-                        } catch (logError) {
-                            console.error('Passkey registration failed', e);
-                            console.error('Failed to read error response body', logError);
-                        }
-                    } else {
-                        console.error('Passkey registration failed', e);
-                    }
-                }
-
-                registerButton.disabled = false;
-                registerButton.textContent = original;
-                alert('パスキー登録に失敗しました。再度お試しください。');
-            }
-        });
-    });
 </script>
