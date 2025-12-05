@@ -21,3 +21,4 @@ tmp_test.txt
 /_ide_helper.php
 /.phpstorm.meta.php
 /npm-debug.log*
+/public/hot

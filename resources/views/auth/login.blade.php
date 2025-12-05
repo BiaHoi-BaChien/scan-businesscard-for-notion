@@ -2,7 +2,6 @@
     <article style="max-width: 480px; margin: auto;">
         <hgroup>
             <h1>ログイン</h1>
-            <p class="muted">パスワードまたはパスキーで認証</p>
         </hgroup>
         <form method="POST" action="{{ route('login') }}">
             @csrf
