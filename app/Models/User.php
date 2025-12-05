@@ -21,6 +21,8 @@ class User extends Authenticatable
         'password',
         'remember_token',
         'encrypted_password',
+        'passkey_hash',
+        'passkey_registered_at',
     ];
 
     protected $casts = [
