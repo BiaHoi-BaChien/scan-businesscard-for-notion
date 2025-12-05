@@ -12,31 +12,6 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
     <script>window.appDebug = @json(config('app.debug'));</script>
     <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
-    <script src="{{ asset('webpass.js') }}"></script>
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            if (window.webpassClient) return;
-
-            const supportsPasskey = 'PublicKeyCredential' in window && typeof Webpass !== 'undefined';
-            if (!supportsPasskey) return;
-
-            const webpassRoutes = {
-                registerOptions: @json(route('webauthn.register.options')),
-                register: @json(route('webauthn.register')),
-                loginOptions: @json(route('webauthn.login.options')),
-                login: @json(route('webauthn.login')),
-            };
-
-            try {
-                // Send session cookies even when the frontend and backend are on different
-                // origins (e.g. Vite dev server) or served from a subdirectory, otherwise
-                // WebAuthn requests lose the authentication context and fail silently.
-                window.webpassClient = new Webpass(webpassRoutes, {}, true);
-            } catch (error) {
-                console.warn('Failed to initialize Webpass client', error);
-            }
-        });
-    </script>
     <style>
         :root {
             --bg: #f4f8f3;
@@ -121,9 +96,6 @@
                 @auth
                     <div class="app-user">
                         <span>{{ auth()->user()->username }}</span>
-                        @if(auth()->user()->hasPasskey())
-                            <span class="badge">パスキー登録済み</span>
-                        @endif
                     </div>
                 @endauth
             </div>
