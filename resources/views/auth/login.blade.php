@@ -1,4 +1,4 @@
-﻿<x-layouts.app>
+<x-layouts.app>
     <article style="max-width: 480px; margin: auto;">
         <hgroup>
             <h1>ログイン</h1>
