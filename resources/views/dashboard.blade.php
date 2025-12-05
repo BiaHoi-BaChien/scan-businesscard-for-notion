@@ -1,4 +1,4 @@
-﻿<x-layouts.app>
+<x-layouts.app>
     <section class="cards" x-data="Object.assign(deviceState(), cardUploader(false), processor())" x-init="initDeviceState(); scrollToResultsIfNeeded(@json(!is_null(session('analysis'))))">
         <article class="panel">
             <header class="grid" style="gap:0.35rem; align-items:flex-start;">
