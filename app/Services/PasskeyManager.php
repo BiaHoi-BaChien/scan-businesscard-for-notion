@@ -66,6 +66,10 @@ class PasskeyManager
             'prepareRegistration',
             'createRegistrationOptions',
             'generateRegistrationData',
+            'prepareCreation',
+            'creationOptions',
+            'publicKeyCreationOptions',
+            'createOptions',
         ], [$user]);
     }
 
@@ -78,6 +82,10 @@ class PasskeyManager
             'confirmRegistration',
             'register',
             'validate',
+            'handleCreation',
+            'handleCreate',
+            'storeAttestation',
+            'validateAttestation',
         ], [$user, $data, $name]);
     }
 
@@ -91,6 +99,9 @@ class PasskeyManager
             'createAuthenticationOptions',
             'generateAuthenticationData',
             'request',
+            'prepareAssertion',
+            'assertionOptions',
+            'createAssertionOptions',
         ], [$user]);
     }
 
@@ -101,6 +112,9 @@ class PasskeyManager
             'authenticate',
             'confirmAuthentication',
             'login',
+            'validateAuthentication',
+            'handleAuthentication',
+            'verify',
         ], [$user, $data]);
     }
 }
