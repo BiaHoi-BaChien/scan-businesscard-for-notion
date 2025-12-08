@@ -117,6 +117,16 @@ class BusinessCardOcrParser
 
     private function splitAddressAndCompany(string $line): array
     {
+        if ($this->looksLikeAddress($line) && $this->looksLikeCompany($line)) {
+            if (preg_match('/' . self::COMPANY_PATTERN . '/u', $line, $match, PREG_OFFSET_CAPTURE)) {
+                $companyStart = $match[0][1];
+                $address = trim(substr($line, 0, $companyStart));
+                $company = trim(substr($line, $companyStart));
+
+                return [$address, $company];
+            }
+        }
+
         if (preg_match('/^(?<address>〒?\d{3}-\d{4}[^\n]*?)(?:\s+|　)(?<company>.+(' . self::COMPANY_PATTERN . ').*)$/u', $line, $match)) {
             return [trim($match['address']), trim($match['company'])];
         }
