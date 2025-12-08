@@ -44,8 +44,14 @@ class PasskeyManager
             try {
                 $result = forward_static_call_array([$facadeClass, $method], $parameters);
 
-                if (is_object($result) && method_exists($result, 'toArray')) {
-                    return $result->toArray();
+                if (is_object($result)) {
+                    if (method_exists($result, 'toArray')) {
+                        return $result->toArray();
+                    }
+
+                    if ($result instanceof \JsonSerializable) {
+                        return $result->jsonSerialize();
+                    }
                 }
 
                 return $result;
@@ -66,6 +72,10 @@ class PasskeyManager
             'prepareRegistration',
             'createRegistrationOptions',
             'generateRegistrationData',
+            'prepareCreation',
+            'creationOptions',
+            'publicKeyCreationOptions',
+            'createOptions',
         ], [$user]);
     }
 
@@ -78,6 +88,10 @@ class PasskeyManager
             'confirmRegistration',
             'register',
             'validate',
+            'handleCreation',
+            'handleCreate',
+            'storeAttestation',
+            'validateAttestation',
         ], [$user, $data, $name]);
     }
 
@@ -91,6 +105,9 @@ class PasskeyManager
             'createAuthenticationOptions',
             'generateAuthenticationData',
             'request',
+            'prepareAssertion',
+            'assertionOptions',
+            'createAssertionOptions',
         ], [$user]);
     }
 
@@ -101,6 +118,9 @@ class PasskeyManager
             'authenticate',
             'confirmAuthentication',
             'login',
+            'validateAuthentication',
+            'handleAuthentication',
+            'verify',
         ], [$user, $data]);
     }
 }
