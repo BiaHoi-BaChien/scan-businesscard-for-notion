@@ -125,7 +125,7 @@
 
             try {
                 const optionPayload = await fetchJson('{{ route('passkeys.options') }}', { username });
-                const publicKey = transformOptions(optionPayload);
+                const publicKey = transformOptions(optionPayload?.options);
 
                 if (!publicKey) {
                     throw new Error('認証情報の取得に失敗しました。');
@@ -136,6 +136,7 @@
                 const result = await fetchJson('{{ route('passkeys.login') }}', {
                     username,
                     data: formatAssertion(assertion),
+                    state: optionPayload?.state,
                 });
 
                 setMessage('ログインに成功しました。リダイレクトしています...');
