@@ -7,8 +7,9 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Spatie\LaravelPasskeys\Models\Concerns\HasPasskeys;
 
-class User extends Authenticatable
+class User extends Authenticatable implements HasPasskeys
 {
     use HasFactory, Notifiable;
 
@@ -32,5 +33,20 @@ class User extends Authenticatable
     public function passkeys(): HasMany
     {
         return $this->hasMany(Passkey::class);
+    }
+
+    public function getPassKeyName(): string
+    {
+        return $this->username;
+    }
+
+    public function getPassKeyId(): string
+    {
+        return (string) $this->id;
+    }
+
+    public function getPassKeyDisplayName(): string
+    {
+        return $this->username;
     }
 }

@@ -3,124 +3,93 @@
 namespace App\Services;
 
 use App\Models\User;
-use BadMethodCallException;
-use Composer\InstalledVersions;
+use Illuminate\Support\Facades\Session;
 use RuntimeException;
+use Spatie\LaravelPasskeys\Actions\FindPasskeyToAuthenticateAction;
+use Spatie\LaravelPasskeys\Actions\GeneratePasskeyAuthenticationOptionsAction;
+use Spatie\LaravelPasskeys\Actions\GeneratePasskeyRegisterOptionsAction;
+use Spatie\LaravelPasskeys\Actions\StorePasskeyAction;
+use Spatie\LaravelPasskeys\Support\Config as PasskeyConfig;
 
 class PasskeyManager
 {
-    private const FACADE_CLASSES = [
-        '\\Spatie\\Passkey\\Facades\\Passkey',
-        '\\Spatie\\Passkeys\\Facades\\Passkey',
-    ];
-
-    private function ensureInstalled(): void
-    {
-        if (class_exists(InstalledVersions::class) && InstalledVersions::isInstalled('spatie/laravel-passkeys')) {
-            return;
-        }
-
-        throw new RuntimeException('spatie/laravel-passkeys がインストールされていません。composer install を実行してください。');
-    }
-
-    private function resolveFacadeClass(): string
-    {
-        $this->ensureInstalled();
-
-        foreach (self::FACADE_CLASSES as $facadeClass) {
-            if (class_exists($facadeClass)) {
-                return $facadeClass;
-            }
-        }
-
-        throw new RuntimeException('spatie/laravel-passkeys の公開メソッドが見つかりません。パッケージのバージョンを確認してください。');
-    }
-
-    private function callFirstAvailable(array $methods, array $parameters = [])
-    {
-        $facadeClass = $this->resolveFacadeClass();
-
-        foreach ($methods as $method) {
-            try {
-                $result = forward_static_call_array([$facadeClass, $method], $parameters);
-
-                if (is_object($result)) {
-                    if (method_exists($result, 'toArray')) {
-                        return $result->toArray();
-                    }
-
-                    if ($result instanceof \JsonSerializable) {
-                        return $result->jsonSerialize();
-                    }
-                }
-
-                return $result;
-            } catch (BadMethodCallException $exception) {
-                continue;
-            }
-        }
-
-        throw new RuntimeException('spatie/laravel-passkeys の公開メソッドが見つかりません。パッケージのバージョンを確認してください。');
-    }
-
     public function registrationOptions(User $user): array
     {
-        return (array) $this->callFirstAvailable([
-            'beginRegistration',
-            'registration',
-            'registrationOptions',
-            'prepareRegistration',
-            'createRegistrationOptions',
-            'generateRegistrationData',
-            'prepareCreation',
-            'creationOptions',
-            'publicKeyCreationOptions',
-            'createOptions',
-        ], [$user]);
+        $action = PasskeyConfig::getAction(
+            'generate_passkey_register_options',
+            GeneratePasskeyRegisterOptionsAction::class
+        );
+
+        $optionsJson = $action->execute($user);
+
+        Session::put('passkey-registration-options', $optionsJson);
+
+        $options = json_decode($optionsJson, true);
+
+        if (! is_array($options)) {
+            throw new RuntimeException('パスキー登録オプションの生成に失敗しました。');
+        }
+
+        return $options;
     }
 
     public function register(User $user, array $data, ?string $name = null): mixed
     {
-        return $this->callFirstAvailable([
-            'finishRegistration',
-            'create',
-            'store',
-            'confirmRegistration',
-            'register',
-            'validate',
-            'handleCreation',
-            'handleCreate',
-            'storeAttestation',
-            'validateAttestation',
-        ], [$user, $data, $name]);
+        $optionsJson = Session::pull('passkey-registration-options');
+
+        if (! is_string($optionsJson) || $optionsJson === '') {
+            throw new RuntimeException('パスキー登録オプションがセッションにありません。もう一度やり直してください。');
+        }
+
+        $action = PasskeyConfig::getAction('store_passkey', StorePasskeyAction::class);
+
+        return $action->execute(
+            $user,
+            json_encode($data),
+            $optionsJson,
+            request()->getHost(),
+            ['name' => $name]
+        );
     }
 
     public function authenticationOptions(User $user): array
     {
-        return (array) $this->callFirstAvailable([
-            'beginAuthentication',
-            'authentication',
-            'authenticationOptions',
-            'prepareAuthentication',
-            'createAuthenticationOptions',
-            'generateAuthenticationData',
-            'request',
-            'prepareAssertion',
-            'assertionOptions',
-            'createAssertionOptions',
-        ], [$user]);
+        $action = PasskeyConfig::getAction(
+            'generate_passkey_authentication_options',
+            GeneratePasskeyAuthenticationOptionsAction::class
+        );
+
+        $optionsJson = $action->execute();
+
+        Session::put('passkey-authentication-options', $optionsJson);
+
+        $options = json_decode($optionsJson, true);
+
+        if (! is_array($options)) {
+            throw new RuntimeException('パスキー認証オプションの生成に失敗しました。');
+        }
+
+        return $options;
     }
 
     public function authenticate(User $user, array $data): bool
     {
-        return (bool) $this->callFirstAvailable([
-            'finishAuthentication',
-            'authenticate',
-            'confirmAuthentication',
-            'login',
-            'validateAuthentication',
-            'handleAuthentication',
-            'verify',
-        ], [$user, $data]);
+        $optionsJson = Session::pull('passkey-authentication-options');
+
+        if (! is_string($optionsJson) || $optionsJson === '') {
+            throw new RuntimeException('パスキー認証オプションがセッションにありません。もう一度やり直してください。');
+        }
+
+        $action = PasskeyConfig::getAction('find_passkey', FindPasskeyToAuthenticateAction::class);
+
+        $passkey = $action->execute(json_encode($data), $optionsJson);
+
+        if (! $passkey) {
+            return false;
+        }
+
+        $ownerId = $passkey->user_id ?? $passkey->authenticatable_id ?? null;
+
+        return $ownerId === $user->id;
     }
 }

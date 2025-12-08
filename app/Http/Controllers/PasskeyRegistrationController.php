@@ -39,7 +39,6 @@ class PasskeyRegistrationController extends Controller
 
             return response()->json([
                 'success' => true,
-                'passkey' => $passkey,
             ]);
         } catch (RuntimeException $exception) {
             Log::warning('Passkey registration failed', ['message' => $exception->getMessage()]);
