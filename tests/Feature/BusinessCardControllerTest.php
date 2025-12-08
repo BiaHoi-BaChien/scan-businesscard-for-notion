@@ -70,6 +70,54 @@ class BusinessCardControllerTest extends TestCase
         $this->assertSame('CTO', session('analysis.job_title'));
     }
 
+    public function test_analyze_accepts_uppercase_image_extensions(): void
+    {
+        $user = $this->createUser();
+        config(['services.openai.api_key' => 'test-key']);
+
+        Http::fake([
+            'https://api.openai.com/*' => Http::response([
+                'choices' => [[
+                    'message' => [
+                        'content' => json_encode(['name' => '山田 太郎']),
+                    ],
+                ]],
+            ], 200),
+        ]);
+
+        $response = $this->actingAs($user)->post(route('cards.analyze'), [
+            'front' => $this->createTestImage('front.PNG'),
+        ]);
+
+        $response->assertRedirect(route('dashboard'));
+        $this->assertSame('山田 太郎', session('analysis.name'));
+    }
+
+    public function test_analyze_rejects_disallowed_extensions(): void
+    {
+        $user = $this->createUser();
+        config(['services.openai.api_key' => 'test-key']);
+        Http::fake();
+
+        $response = $this->actingAs($user)->post(route('cards.analyze'), [
+            'front' => $this->createTestImage('front.gif'),
+        ]);
+
+        $response->assertSessionHasErrors('front');
+    }
+
+    public function test_analyze_handles_non_file_input_without_crashing(): void
+    {
+        $user = $this->createUser();
+
+        $response = $this->actingAs($user)->post(route('cards.analyze'), [
+            'front' => 'not-a-file',
+        ]);
+
+        $response->assertStatus(302);
+        $response->assertSessionHasErrors('front');
+    }
+
     public function test_analyze_clears_analysis_session_when_openai_returns_server_error(): void
     {
         $user = $this->createUser();
