@@ -13,7 +13,7 @@
 ## セットアップ手順
 
 1. リポジトリをクローンします。
-2. `.env.example` を `.env` にコピーし、後述の環境変数を設定します。
+2. `.env.example` を `.env` にコピーし、後述の環境変数（`AUTH_SECRET`、`OPENAI_API_KEY`、`NOTION_API_KEY`、`NOTION_DATA_SOURCE_ID`、`NOTION_VERSION`、`NOTION_PROPERTY_MAPPING` など）を設定します。
 3. 依存関係をインストールします。
    - バックエンド: `composer install`
    - フロントエンド: `npm install`
