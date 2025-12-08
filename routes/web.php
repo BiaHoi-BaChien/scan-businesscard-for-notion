@@ -3,6 +3,8 @@
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\BusinessCardController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\PasskeyLoginController;
+use App\Http\Controllers\PasskeyRegistrationController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 
@@ -12,12 +14,18 @@ $registerBusinessCardRoutes = function () {
     Route::middleware('guest')->group(function () {
         Route::get('/login', [AuthController::class, 'showLogin'])->name('login.form');
         Route::post('/login', [AuthController::class, 'login'])->name('login');
+
+        Route::post('/passkeys/options', [PasskeyLoginController::class, 'options'])->name('passkeys.options');
+        Route::post('/passkeys/login', [PasskeyLoginController::class, 'login'])->name('passkeys.login');
     });
 
     Route::middleware('auth')->group(function () {
         Route::get('/', function () { return redirect()->route('dashboard'); });
         Route::get('/dashboard', DashboardController::class)->name('dashboard');
         Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
+
+        Route::post('/passkeys/register/options', [PasskeyRegistrationController::class, 'options'])->name('passkeys.register.options');
+        Route::post('/passkeys/register', [PasskeyRegistrationController::class, 'store'])->name('passkeys.register');
 
         Route::post('/analyze', [BusinessCardController::class, 'analyze'])->name('cards.analyze');
         Route::post('/notion', [BusinessCardController::class, 'pushToNotion'])->name('cards.notion');
