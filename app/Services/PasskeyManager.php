@@ -4,26 +4,45 @@ namespace App\Services;
 
 use App\Models\User;
 use BadMethodCallException;
+use Composer\InstalledVersions;
 use RuntimeException;
 
 class PasskeyManager
 {
-    private const FACADE_CLASS = '\\Spatie\\Passkey\\Facades\\Passkey';
+    private const FACADE_CLASSES = [
+        '\\Spatie\\Passkey\\Facades\\Passkey',
+        '\\Spatie\\Passkeys\\Facades\\Passkey',
+    ];
 
-    private function ensureAvailable(): void
+    private function ensureInstalled(): void
     {
-        if (! class_exists(self::FACADE_CLASS)) {
-            throw new RuntimeException('spatie/laravel-passkeys がインストールされていません。composer install を実行してください。');
+        if (class_exists(InstalledVersions::class) && InstalledVersions::isInstalled('spatie/laravel-passkeys')) {
+            return;
         }
+
+        throw new RuntimeException('spatie/laravel-passkeys がインストールされていません。composer install を実行してください。');
+    }
+
+    private function resolveFacadeClass(): string
+    {
+        $this->ensureInstalled();
+
+        foreach (self::FACADE_CLASSES as $facadeClass) {
+            if (class_exists($facadeClass)) {
+                return $facadeClass;
+            }
+        }
+
+        throw new RuntimeException('spatie/laravel-passkeys の公開メソッドが見つかりません。パッケージのバージョンを確認してください。');
     }
 
     private function callFirstAvailable(array $methods, array $parameters = [])
     {
-        $this->ensureAvailable();
+        $facadeClass = $this->resolveFacadeClass();
 
         foreach ($methods as $method) {
             try {
-                $result = forward_static_call_array([self::FACADE_CLASS, $method], $parameters);
+                $result = forward_static_call_array([$facadeClass, $method], $parameters);
 
                 if (is_object($result) && method_exists($result, 'toArray')) {
                     return $result->toArray();
