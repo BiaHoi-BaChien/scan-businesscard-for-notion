@@ -17,10 +17,12 @@
                             <span class="role-pill">{{ $user->is_admin ? 'ADMIN' : 'USER' }}</span>
                         </div>
                         <div class="user-actions">
-                            <form method="POST" action="{{ route('users.destroy', $user) }}" onsubmit="return confirm('削除しますか？');">
-                                @csrf @method('DELETE')
-                                <button type="submit" class="secondary">削除</button>
-                            </form>
+                            @if(auth()->id() !== $user->id)
+                                <form method="POST" action="{{ route('users.destroy', $user) }}" onsubmit="return confirm('削除しますか？');">
+                                    @csrf @method('DELETE')
+                                    <button type="submit" class="secondary">削除</button>
+                                </form>
+                            @endif
                         </div>
                     </li>
                 @endforeach
