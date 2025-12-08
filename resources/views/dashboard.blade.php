@@ -127,6 +127,23 @@
         </template>
     </section>
 
+    <section style="margin-top:1.5rem; align-items:stretch;">
+        <article class="panel">
+            <header class="grid" style="gap:0.25rem;">
+                <h3 style="margin:0;">パスキー登録</h3>
+                <p class="muted" style="margin:0;">この端末にパスキーを登録して、次回以降のログインを簡単にしましょう。</p>
+            </header>
+            <div class="stack gap-sm">
+                <label class="muted">デバイス名（任意）
+                    <input type="text" id="passkey-device-name" placeholder="例: 自宅PC">
+                </label>
+                <p class="muted" style="margin:0;">ブラウザのパスキー機能を利用します。共有端末では実施しないでください。</p>
+                <button type="button" class="secondary" data-passkey-register>この端末にパスキーを登録</button>
+                <small class="muted" id="passkey-register-message"></small>
+            </div>
+        </article>
+    </section>
+
     @if(auth()->user()->is_admin)
         <section style="margin-top:1.5rem; align-items:stretch;">
             <article class="panel">
@@ -287,4 +304,103 @@
             }
         }
     }
+
+    const passkeyRegistration = (() => {
+        const base64URLToBuffer = (value) => Uint8Array.from(atob(value.replace(/-/g, '+').replace(/_/g, '/')), c => c.charCodeAt(0)).buffer;
+        const bufferToBase64URL = (buffer) => btoa(String.fromCharCode(...new Uint8Array(buffer))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+
+        const setMessage = (message, isError = false) => {
+            const el = document.getElementById('passkey-register-message');
+            if (!el) return;
+            el.textContent = message || '';
+            el.style.color = isError ? '#c00' : 'inherit';
+        };
+
+        const transformOptions = (options) => {
+            if (!options?.challenge) return null;
+
+            const publicKey = { ...options };
+            publicKey.challenge = base64URLToBuffer(options.challenge);
+
+            if (options.user?.id) {
+                publicKey.user = {
+                    ...options.user,
+                    id: base64URLToBuffer(options.user.id),
+                };
+            }
+
+            if (Array.isArray(options.excludeCredentials)) {
+                publicKey.excludeCredentials = options.excludeCredentials.map(item => ({
+                    ...item,
+                    id: base64URLToBuffer(item.id),
+                }));
+            }
+
+            return publicKey;
+        };
+
+        const formatAttestation = (credential) => ({
+            id: credential.id,
+            type: credential.type,
+            rawId: bufferToBase64URL(credential.rawId),
+            response: {
+                attestationObject: bufferToBase64URL(credential.response.attestationObject),
+                clientDataJSON: bufferToBase64URL(credential.response.clientDataJSON),
+            },
+            clientExtensionResults: credential.getClientExtensionResults(),
+        });
+
+        const fetchJson = async (url, payload) => {
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                },
+                body: JSON.stringify(payload),
+            });
+
+            const data = await response.json().catch(() => ({}));
+            if (!response.ok) {
+                throw new Error(data?.message || 'リクエストに失敗しました。');
+            }
+
+            return data;
+        };
+
+        const register = async () => {
+            if (!('credentials' in navigator) || !('PublicKeyCredential' in window)) {
+                setMessage('パスキーに対応したブラウザでお試しください。', true);
+                return;
+            }
+
+            setMessage('パスキー登録の準備中です...');
+
+            try {
+                const name = document.getElementById('passkey-device-name')?.value || null;
+                const optionPayload = await fetchJson('{{ route('passkeys.register.options') }}', { name });
+                const publicKey = transformOptions(optionPayload);
+
+                if (!publicKey) {
+                    throw new Error('登録情報の取得に失敗しました。');
+                }
+
+                const credential = await navigator.credentials.create({ publicKey });
+
+                await fetchJson('{{ route('passkeys.register') }}', {
+                    name,
+                    data: formatAttestation(credential),
+                });
+
+                setMessage('パスキーを登録しました。次回からパスキーでログインできます。');
+            } catch (error) {
+                console.error(error);
+                setMessage(error?.message || 'パスキーの登録に失敗しました。', true);
+            }
+        };
+
+        return { register };
+    })();
+
+    document.querySelector('[data-passkey-register]')?.addEventListener('click', () => passkeyRegistration.register());
 </script>
