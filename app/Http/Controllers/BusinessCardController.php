@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -11,13 +12,26 @@ class BusinessCardController extends Controller
 {
     private string $browserUserAgent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 '
         .'(KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36';
+    private array $imageExtensions = ['jpg', 'jpeg', 'png'];
 
     // 画像を保存せず、そのままOpenAIに渡して解析する
     public function analyze(Request $request)
     {
+        $extensionRule = function (string $attribute, $value, Closure $fail) {
+            if (! $value) {
+                return;
+            }
+
+            $extension = strtolower($value->getClientOriginalExtension());
+
+            if (! in_array($extension, $this->imageExtensions, true)) {
+                $fail('アップロードできるファイルは: '.implode(', ', $this->imageExtensions).' のみです。');
+            }
+        };
+
         $request->validate([
-            'front' => 'nullable|image|max:4096',
-            'back' => 'nullable|image|max:4096',
+            'front' => ['nullable', 'image', 'max:4096', $extensionRule],
+            'back' => ['nullable', 'image', 'max:4096', $extensionRule],
         ]);
 
         if (! $request->file('front') && ! $request->file('back')) {
