@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\User;
+use BadMethodCallException;
 use RuntimeException;
 
 class PasskeyManager
@@ -21,7 +22,7 @@ class PasskeyManager
         $this->ensureAvailable();
 
         foreach ($methods as $method) {
-            if (method_exists(self::FACADE_CLASS, $method)) {
+            try {
                 $result = forward_static_call_array([self::FACADE_CLASS, $method], $parameters);
 
                 if (is_object($result) && method_exists($result, 'toArray')) {
@@ -29,6 +30,8 @@ class PasskeyManager
                 }
 
                 return $result;
+            } catch (BadMethodCallException $exception) {
+                continue;
             }
         }
 
