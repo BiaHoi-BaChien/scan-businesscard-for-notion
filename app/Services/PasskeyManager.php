@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\User;
+use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Session;
 use RuntimeException;
 use Spatie\LaravelPasskeys\Actions\FindPasskeyToAuthenticateAction;
@@ -30,16 +31,15 @@ class PasskeyManager
             throw new RuntimeException('パスキー登録オプションの生成に失敗しました。');
         }
 
-        return $options;
+        return [
+            'options' => $options,
+            'state' => $this->encryptOptions($optionsJson),
+        ];
     }
 
-    public function register(User $user, array $data, ?string $name = null): mixed
+    public function register(User $user, array $data, ?string $state = null, ?string $name = null): mixed
     {
-        $optionsJson = Session::pull('passkey-registration-options');
-
-        if (! is_string($optionsJson) || $optionsJson === '') {
-            throw new RuntimeException('パスキー登録オプションがセッションにありません。もう一度やり直してください。');
-        }
+        $optionsJson = $this->resolveOptions($state, 'passkey-registration-options');
 
         $action = PasskeyConfig::getAction('store_passkey', StorePasskeyAction::class);
 
@@ -69,16 +69,15 @@ class PasskeyManager
             throw new RuntimeException('パスキー認証オプションの生成に失敗しました。');
         }
 
-        return $options;
+        return [
+            'options' => $options,
+            'state' => $this->encryptOptions($optionsJson),
+        ];
     }
 
-    public function authenticate(User $user, array $data): bool
+    public function authenticate(User $user, array $data, ?string $state = null): bool
     {
-        $optionsJson = Session::pull('passkey-authentication-options');
-
-        if (! is_string($optionsJson) || $optionsJson === '') {
-            throw new RuntimeException('パスキー認証オプションがセッションにありません。もう一度やり直してください。');
-        }
+        $optionsJson = $this->resolveOptions($state, 'passkey-authentication-options');
 
         $action = PasskeyConfig::getAction('find_passkey', FindPasskeyToAuthenticateAction::class);
 
@@ -91,5 +90,25 @@ class PasskeyManager
         $ownerId = $passkey->user_id ?? $passkey->authenticatable_id ?? null;
 
         return $ownerId === $user->id;
+    }
+
+    private function encryptOptions(string $optionsJson): string
+    {
+        return Crypt::encryptString($optionsJson);
+    }
+
+    private function resolveOptions(?string $state, string $sessionKey): string
+    {
+        if (is_string($state) && $state !== '') {
+            return Crypt::decryptString($state);
+        }
+
+        $optionsJson = Session::pull($sessionKey);
+
+        if (! is_string($optionsJson) || $optionsJson === '') {
+            throw new RuntimeException('パスキー認証オプションがセッションにありません。もう一度やり直してください。');
+        }
+
+        return $optionsJson;
     }
 }

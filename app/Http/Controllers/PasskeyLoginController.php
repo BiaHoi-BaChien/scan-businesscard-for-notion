@@ -42,6 +42,7 @@ class PasskeyLoginController extends Controller
         $data = $request->validate([
             'username' => 'required|string',
             'data' => 'required|array',
+            'state' => 'required|string',
         ]);
 
         $user = User::where('username', $data['username'])->first();
@@ -53,7 +54,7 @@ class PasskeyLoginController extends Controller
         }
 
         try {
-            $authenticated = $passkeyManager->authenticate($user, $data['data']);
+            $authenticated = $passkeyManager->authenticate($user, $data['data'], $data['state']);
         } catch (RuntimeException $exception) {
             Log::warning('Passkey authentication failed', ['message' => $exception->getMessage()]);
 

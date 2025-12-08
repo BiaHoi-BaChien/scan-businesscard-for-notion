@@ -26,6 +26,7 @@ class PasskeyRegistrationController extends Controller
     public function store(Request $request, PasskeyManager $passkeyManager): JsonResponse
     {
         $data = $request->validate([
+            'state' => 'required|string',
             'data' => 'required|array',
             'name' => 'nullable|string|max:255',
         ]);
@@ -34,6 +35,7 @@ class PasskeyRegistrationController extends Controller
             $passkey = $passkeyManager->register(
                 $request->user(),
                 $data['data'],
+                $data['state'],
                 $data['name'] ?? null,
             );
 
