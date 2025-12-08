@@ -7,7 +7,7 @@ return [
     'url' => env('APP_URL', 'http://localhost'),
     'asset_url' => env('ASSET_URL'),
     'business_card_prefix' => env('BUSINESS_CARD_PREFIX', 'business_card'),
-    'timezone' => 'UTC',
+    'timezone' => env('APP_TIMEZONE', 'UTC'),
     'locale' => 'en',
     'fallback_locale' => 'en',
     'faker_locale' => 'en_US',
