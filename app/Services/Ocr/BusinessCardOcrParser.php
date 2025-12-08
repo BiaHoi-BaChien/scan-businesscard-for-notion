@@ -4,7 +4,7 @@ namespace App\Services\Ocr;
 
 class BusinessCardOcrParser
 {
-    private const COMPANY_PATTERN = '/(?:株式会社|有限会社|Inc\\.?|LLC|Co\\.?|Company|コーポレーション)/iu';
+    private const COMPANY_PATTERN = '(?:株式会社|有限会社|Inc\.?|LLC|Co\.?|Company|コーポレーション)';
 
     public function parse(string $text): array
     {
@@ -117,13 +117,11 @@ class BusinessCardOcrParser
 
     private function splitAddressAndCompany(string $line): array
     {
-        $companyRegex = self::COMPANY_PATTERN;
-
-        if (preg_match('/^(?<address>〒?\d{3}-\d{4}[^\n]*?)(?:\s+|　)(?<company>.+' . $companyRegex . '.*)$/u', $line, $match)) {
+        if (preg_match('/^(?<address>〒?\d{3}-\d{4}[^\n]*?)(?:\s+|　)(?<company>.+(' . self::COMPANY_PATTERN . ').*)$/u', $line, $match)) {
             return [trim($match['address']), trim($match['company'])];
         }
 
-        if (preg_match('/^(?<address>.*?(?:都|道|府|県)[^\n]*?)(?:\s+|　)(?<company>.+' . $companyRegex . '.*)$/u', $line, $match)) {
+        if (preg_match('/^(?<address>.*?(?:都|道|府|県)[^\n]*?)(?:\s+|　)(?<company>.+(' . self::COMPANY_PATTERN . ').*)$/u', $line, $match)) {
             return [trim($match['address']), trim($match['company'])];
         }
 
@@ -138,6 +136,6 @@ class BusinessCardOcrParser
 
     private function looksLikeCompany(string $line): bool
     {
-        return (bool) preg_match(self::COMPANY_PATTERN, $line);
+        return (bool) preg_match('/' . self::COMPANY_PATTERN . '/iu', $line);
     }
 }
