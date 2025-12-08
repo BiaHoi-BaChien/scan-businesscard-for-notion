@@ -72,6 +72,10 @@ class UserController extends Controller
 
     public function destroy(User $user)
     {
+        if (auth()->id() === $user->id) {
+            return back()->withErrors(['user' => '自分自身を削除することはできません。']);
+        }
+
         $user->delete();
         return back()->with('status', 'ユーザーを削除しました');
     }
