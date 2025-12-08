@@ -12,6 +12,7 @@ return new class extends Migration {
             $table->foreignId('user_id')->constrained()->cascadeOnDelete();
             $table->string('name')->nullable();
             $table->string('credential_id')->unique();
+            $table->json('data')->nullable();
             $table->text('public_key');
             $table->unsignedBigInteger('counter')->default(0);
             $table->string('attestation_type')->nullable();
