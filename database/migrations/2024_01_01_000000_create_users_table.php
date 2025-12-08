@@ -14,8 +14,6 @@ return new class extends Migration {
             $table->string('password');
             $table->text('encrypted_password');
             $table->boolean('is_admin')->default(false);
-            $table->string('passkey_hash')->nullable();
-            $table->timestamp('passkey_registered_at')->nullable();
             $table->rememberToken();
             $table->timestamps();
         });
