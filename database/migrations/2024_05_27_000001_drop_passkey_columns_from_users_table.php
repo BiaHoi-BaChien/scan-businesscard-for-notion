@@ -22,14 +22,6 @@ return new class extends Migration {
 
     public function down(): void
     {
-        Schema::table('users', function (Blueprint $table) {
-            if (! Schema::hasColumn('users', 'passkey_hash')) {
-                $table->string('passkey_hash')->nullable();
-            }
-
-            if (! Schema::hasColumn('users', 'passkey_registered_at')) {
-                $table->timestamp('passkey_registered_at')->nullable();
-            }
-        });
+        // パスキー関連機能を完全に削除するため、ロールバック時もカラムを復元しない。
     }
 };
