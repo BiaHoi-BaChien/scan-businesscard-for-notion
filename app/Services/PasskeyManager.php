@@ -3,6 +3,8 @@
 namespace App\Services;
 
 use App\Models\User;
+use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Session;
 use RuntimeException;
@@ -100,6 +102,12 @@ class PasskeyManager
     private function resolveOptions(?string $state, string $sessionKey): string
     {
         if (is_string($state) && $state !== '') {
+            $cacheKey = $this->stateCacheKey($state);
+
+            if (! Cache::add($cacheKey, true, Carbon::now()->addMinutes(10))) {
+                throw new RuntimeException('このパスキー認証オプションはすでに使用されています。もう一度やり直してください。');
+            }
+
             return Crypt::decryptString($state);
         }
 
@@ -110,5 +118,10 @@ class PasskeyManager
         }
 
         return $optionsJson;
+    }
+
+    private function stateCacheKey(string $state): string
+    {
+        return 'passkey-state-used:' . hash('sha256', $state);
     }
 }
