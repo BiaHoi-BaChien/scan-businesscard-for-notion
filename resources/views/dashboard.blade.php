@@ -62,7 +62,7 @@
                         'name' => '氏名',
                         'job_title' => '役職',
                         'company' => '会社名',
-                        'address' => '住所',
+                        'address' => '住所（都道府県・市区町村）',
                         'website' => '会社サイトURL',
                         'email' => 'メールアドレス',
                         'phone_number_1' => '電話番号1',
@@ -78,11 +78,24 @@
                             @foreach($labels as $key => $label)
                                 @if(array_key_exists($key, $analysis))
                                     <label class="muted">{{ $label }}
-                                        <input type="text" name="{{ $key }}" value="{{ old($key, $analysis[$key]) }}">
+                                        <input
+                                            type="text"
+                                            name="{{ $key }}"
+                                            value="{{ old($key, $analysis[$key]) }}"
+                                            @if($key === 'address')
+                                                placeholder="例: 東京都千代田区1-1-1"
+                                                aria-describedby="address-hint"
+                                            @endif
+                                        >
                                     </label>
                                 @endif
                             @endforeach
                         </div>
+                        @if(array_key_exists('address', $analysis))
+                            <p class="muted" id="address-hint" style="margin: 0;">
+                                住所の入力は「都道府県」などを新字体で統一してください。
+                            </p>
+                        @endif
                         <label><input type="checkbox" x-model="ok"> この内容でOK</label>
                         <button type="submit" class="primary block" :disabled="!ok || processing">Notionに登録する</button>
                         @if(session('notion_url'))
