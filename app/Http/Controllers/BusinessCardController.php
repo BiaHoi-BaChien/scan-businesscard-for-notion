@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use Closure;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -19,6 +20,10 @@ class BusinessCardController extends Controller
     {
         $extensionRule = function (string $attribute, $value, Closure $fail) {
             if (! $value) {
+                return;
+            }
+
+            if (! $value instanceof UploadedFile) {
                 return;
             }
 

@@ -106,6 +106,18 @@ class BusinessCardControllerTest extends TestCase
         $response->assertSessionHasErrors('front');
     }
 
+    public function test_analyze_handles_non_file_input_without_crashing(): void
+    {
+        $user = $this->createUser();
+
+        $response = $this->actingAs($user)->post(route('cards.analyze'), [
+            'front' => 'not-a-file',
+        ]);
+
+        $response->assertStatus(302);
+        $response->assertSessionHasErrors('front');
+    }
+
     public function test_analyze_clears_analysis_session_when_openai_returns_server_error(): void
     {
         $user = $this->createUser();
