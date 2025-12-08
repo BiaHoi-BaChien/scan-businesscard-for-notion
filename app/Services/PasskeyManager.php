@@ -44,8 +44,14 @@ class PasskeyManager
             try {
                 $result = forward_static_call_array([$facadeClass, $method], $parameters);
 
-                if (is_object($result) && method_exists($result, 'toArray')) {
-                    return $result->toArray();
+                if (is_object($result)) {
+                    if (method_exists($result, 'toArray')) {
+                        return $result->toArray();
+                    }
+
+                    if ($result instanceof \JsonSerializable) {
+                        return $result->jsonSerialize();
+                    }
                 }
 
                 return $result;
