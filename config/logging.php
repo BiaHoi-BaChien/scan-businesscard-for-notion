@@ -19,6 +19,7 @@ return [
             'driver' => 'single',
             'path' => storage_path('logs/laravel.log'),
             'level' => env('LOG_LEVEL', 'debug'),
+            'timezone' => config('app.timezone'),
             'replace_placeholders' => true,
         ],
         'daily' => [
@@ -26,6 +27,7 @@ return [
             'path' => storage_path('logs/laravel.log'),
             'level' => env('LOG_LEVEL', 'debug'),
             'days' => 14,
+            'timezone' => config('app.timezone'),
             'replace_placeholders' => true,
         ],
         'slack' => [
@@ -55,16 +57,19 @@ return [
             'with' => [
                 'stream' => 'php://stderr',
             ],
+            'timezone' => config('app.timezone'),
             'processors' => [PsrLogMessageProcessor::class],
         ],
         'syslog' => [
             'driver' => 'syslog',
             'level' => env('LOG_LEVEL', 'debug'),
+            'timezone' => config('app.timezone'),
             'processors' => [PsrLogMessageProcessor::class],
         ],
         'errorlog' => [
             'driver' => 'errorlog',
             'level' => env('LOG_LEVEL', 'debug'),
+            'timezone' => config('app.timezone'),
             'processors' => [PsrLogMessageProcessor::class],
         ],
         'null' => [
