@@ -62,6 +62,7 @@ class PasskeyManager
         return (array) $this->callFirstAvailable([
             'beginRegistration',
             'registration',
+            'registrationOptions',
             'prepareRegistration',
             'createRegistrationOptions',
             'generateRegistrationData',
@@ -76,6 +77,7 @@ class PasskeyManager
             'store',
             'confirmRegistration',
             'register',
+            'validate',
         ], [$user, $data, $name]);
     }
 
@@ -84,6 +86,7 @@ class PasskeyManager
         return (array) $this->callFirstAvailable([
             'beginAuthentication',
             'authentication',
+            'authenticationOptions',
             'prepareAuthentication',
             'createAuthenticationOptions',
             'generateAuthenticationData',
