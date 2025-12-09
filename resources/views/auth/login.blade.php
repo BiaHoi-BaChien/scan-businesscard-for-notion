@@ -61,6 +61,8 @@
             return Uint8Array.from(atob(padded), c => c.charCodeAt(0)).buffer;
         };
         const bufferToBase64URL = (buffer) => btoa(String.fromCharCode(...new Uint8Array(buffer))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+        let inFlight = false;
+        let attemptId = 0;
 
         const setMessage = (message, isError = false) => {
             const el = document.getElementById('passkey-login-message');
@@ -133,8 +135,12 @@
         };
 
         const login = async () => {
+            if (inFlight) {
+                return; // prevent reusing a previous attempt
+            }
+
             if (!('credentials' in navigator) || !('PublicKeyCredential' in window)) {
-                setMessage('パスキーに対応したブラウザでお試しください。', true);
+                setMessage('このブラウザはパスキーに対応していません。', true);
                 return;
             }
 
@@ -144,19 +150,29 @@
                 return;
             }
 
-            setMessage('パスキー認証の準備中です...');
+            setMessage('パスキー認証を開始します...');
+            inFlight = true;
+            const currentAttempt = ++attemptId;
 
             try {
                 const optionPayload = await fetchJson('{{ route('passkeys.options') }}', { username });
                 const publicKey = transformOptions(optionPayload?.options);
 
                 if (!publicKey) {
-                    throw new Error('認証情報の取得に失敗しました。');
+                    throw new Error('認証オプションの取得に失敗しました。');
+                }
+
+                if (currentAttempt !== attemptId) {
+                    return; // aborted because a newer attempt started
                 }
 
                 const assertion = await navigator.credentials.get({ publicKey }).catch((error) => {
                     throw error;
                 });
+
+                if (currentAttempt !== attemptId) {
+                    return; // aborted because a newer attempt started
+                }
 
                 const result = await fetchJson('{{ route('passkeys.login') }}', {
                     username,
@@ -164,15 +180,16 @@
                     state: optionPayload?.state,
                 });
 
-                setMessage('ログインに成功しました。リダイレクトしています...');
+                setMessage('認証に成功しました。リダイレクト中...');
                 if (result?.redirect) {
                     window.location.href = result.redirect;
                 }
             } catch (error) {
-                setMessage(error?.message || 'パスキー認証に失敗しました。', true);
+                setMessage(error?.message || '認証に失敗しました。', true);
+            } finally {
+                inFlight = false;
             }
         };
-
         return { login };
     })();
 
