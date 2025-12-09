@@ -100,10 +100,18 @@ class PasskeyLoginController extends Controller
         }
 
         if (! $authenticated) {
+            Log::info('Passkey authentication result', array_merge($logContext, [
+                'authenticated' => false,
+            ]));
+
             return response()->json([
-                'message' => 'パスキー認証に失敗しました。',
+                'message' => '認証に失敗しました。',
             ], 422);
         }
+
+        Log::info('Passkey authentication result', array_merge($logContext, [
+            'authenticated' => true,
+        ]));
 
         Auth::login($user, true);
         $request->session()->regenerate();

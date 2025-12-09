@@ -86,11 +86,24 @@ class PasskeyManager
 
         $passkey = $action->execute(json_encode($data), $optionsJson);
 
+        Log::debug('Passkey authenticate lookup result', [
+            'user_id' => $user->id,
+            'passkey_found' => (bool) $passkey,
+            'passkey_class' => $passkey ? get_class($passkey) : null,
+        ]);
+
         if (! $passkey) {
             return false;
         }
 
         $ownerId = $passkey->user_id ?? $passkey->authenticatable_id ?? null;
+
+        if ($ownerId !== $user->id) {
+            Log::warning('Passkey authenticate owner mismatch', [
+                'user_id' => $user->id,
+                'passkey_owner_id' => $ownerId,
+            ]);
+        }
 
         return $ownerId === $user->id;
     }
