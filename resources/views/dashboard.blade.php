@@ -319,7 +319,12 @@
     }
 
     const passkeyRegistration = (() => {
-        const base64URLToBuffer = (value) => Uint8Array.from(atob(value.replace(/-/g, '+').replace(/_/g, '/')), c => c.charCodeAt(0)).buffer;
+        const base64URLToBuffer = (value) => {
+            const normalized = value.replace(/-/g, '+').replace(/_/g, '/');
+            const padded = normalized.padEnd(normalized.length + (4 - (normalized.length % 4)) % 4, '=');
+
+            return Uint8Array.from(atob(padded), c => c.charCodeAt(0)).buffer;
+        };
         const bufferToBase64URL = (buffer) => btoa(String.fromCharCode(...new Uint8Array(buffer))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 
         const setMessage = (message, isError = false) => {
