@@ -392,7 +392,7 @@
             try {
                 const name = document.getElementById('passkey-device-name')?.value || null;
                 const optionPayload = await fetchJson('{{ route('passkeys.register.options') }}', { name });
-                const publicKey = transformOptions(optionPayload);
+                const publicKey = transformOptions(optionPayload?.options);
 
                 if (!publicKey) {
                     throw new Error('登録情報の取得に失敗しました。');
@@ -403,6 +403,7 @@
                 await fetchJson('{{ route('passkeys.register') }}', {
                     name,
                     data: formatAttestation(credential),
+                    state: optionPayload?.state,
                 });
 
                 setMessage('パスキーを登録しました。次回からパスキーでログインできます。');

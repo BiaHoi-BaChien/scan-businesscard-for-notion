@@ -25,6 +25,32 @@
     </article>
 </x-layouts.app>
 <script>
+    const COOKIE_NAME = 'username';
+
+    const getCookie = (name) => {
+        const cookies = document.cookie.split('; ').map(cookie => cookie.split('='));
+        const match = cookies.find(([key]) => key === encodeURIComponent(name));
+        return match ? decodeURIComponent(match[1]) : '';
+    };
+
+    const setCookie = (name, value, days = 30) => {
+        const expires = new Date(Date.now() + days * 864e5).toUTCString();
+        document.cookie = `${encodeURIComponent(name)}=${encodeURIComponent(value)}; expires=${expires}; path=/`;
+    };
+
+    const usernameInput = document.querySelector('input[name="username"]');
+    const savedUsername = getCookie(COOKIE_NAME);
+    if (savedUsername && usernameInput) {
+        usernameInput.value = savedUsername;
+    }
+
+    document.querySelector('form[action="{{ route('login') }}"]')?.addEventListener('submit', () => {
+        const username = usernameInput?.value.trim();
+        if (username) {
+            setCookie(COOKIE_NAME, username);
+        }
+    });
+
     const passkeyLogin = (() => {
         const base64URLToBuffer = (value) => Uint8Array.from(atob(value.replace(/-/g, '+').replace(/_/g, '/')), c => c.charCodeAt(0)).buffer;
         const bufferToBase64URL = (buffer) => btoa(String.fromCharCode(...new Uint8Array(buffer))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
@@ -134,7 +160,7 @@
             try {
                 await refreshCsrfToken();
                 const optionPayload = await fetchJson('{{ route('passkeys.options') }}', { username });
-                const publicKey = transformOptions(optionPayload);
+                const publicKey = transformOptions(optionPayload?.options);
 
                 if (!publicKey) {
                     throw new Error('認証情報の取得に失敗しました。');
@@ -145,6 +171,7 @@
                 const result = await fetchJson('{{ route('passkeys.login') }}', {
                     username,
                     data: formatAssertion(assertion),
+                    state: optionPayload?.state,
                 });
 
                 setMessage('ログインに成功しました。リダイレクトしています...');
