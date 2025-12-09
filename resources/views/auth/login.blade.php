@@ -196,44 +196,7 @@
             clientExtensionResults: assertion.getClientExtensionResults(),
         });
 
-        const refreshCsrfToken = async () => {
-            logDebug('csrf:refresh:start', { summary: 'CSRF token refresh start' });
-
-            const startedAt = Date.now();
-            try {
-                const response = await fetch('{{ route('csrf.token') }}', {
-                    method: 'GET',
-                    credentials: 'same-origin',
-                    cache: 'no-store',
-                    headers: { 'X-Requested-With': 'XMLHttpRequest' },
-                });
-                const data = await response.json().catch(() => ({}));
-
-                logDebug('csrf:refresh:response', {
-                    status: response.status,
-                    ok: response.ok,
-                    body: data,
-                    durationMs: Date.now() - startedAt,
-                    summary: `csrf status:${response.status}`,
-                }, { send: !response.ok });
-
-                if (response.ok && data?.token) {
-                    const meta = getCsrfMeta();
-                    if (meta) meta.setAttribute('content', data.token);
-                    return data.token;
-                }
-            } catch (error) {
-                logDebug('csrf:refresh:error', {
-                    error: serializeError(error),
-                    durationMs: Date.now() - startedAt,
-                    summary: 'csrf refresh failed',
-                }, { send: true });
-            }
-
-            return null;
-        };
-
-        const fetchJson = async (url, payload, retryOnCsrf = true) => {
+        const fetchJson = async (url, payload) => {
             const csrfMeta = getCsrfMeta();
             logDebug('fetch:request', {
                 url,
@@ -274,13 +237,6 @@
                 summary: `${url} status ${response.status}`,
             }, { send: !response.ok });
 
-            if (!response.ok && retryOnCsrf && response.status === 419) {
-                const refreshed = await refreshCsrfToken();
-                if (refreshed) {
-                    return fetchJson(url, payload, false);
-                }
-            }
-
             if (!response.ok) {
                 const err = new Error(data?.message || 'リクエストに失敗しました。');
                 err.responseStatus = response.status;
@@ -316,7 +272,6 @@
             });
 
             try {
-                await refreshCsrfToken();
                 const optionPayload = await fetchJson('{{ route('passkeys.options') }}', { username });
                 const publicKey = transformOptions(optionPayload?.options);
 

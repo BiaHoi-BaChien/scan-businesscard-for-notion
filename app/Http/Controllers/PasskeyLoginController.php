@@ -14,10 +14,6 @@ class PasskeyLoginController extends Controller
 {
     public function options(Request $request, PasskeyManager $passkeyManager): JsonResponse
     {
-        $previousToken = $request->session()->token();
-        $request->session()->regenerateToken();
-        $csrfTokenUpdated = $previousToken !== $request->session()->token();
-
         $data = $request->validate([
             'username' => 'required|string',
             'has_navigator_credentials' => 'nullable|boolean',
@@ -35,7 +31,6 @@ class PasskeyLoginController extends Controller
             'has_navigator_credentials' => $request->boolean('has_navigator_credentials'),
             'referer' => $request->headers->get('referer'),
             'origin_hint' => $data['origin_hint'] ?? null,
-            'csrf_token_updated' => $csrfTokenUpdated,
         ];
 
         Log::info('Passkey authentication options request started', $logContext);
@@ -62,10 +57,6 @@ class PasskeyLoginController extends Controller
 
     public function login(Request $request, PasskeyManager $passkeyManager): JsonResponse
     {
-        $previousToken = $request->session()->token();
-        $request->session()->regenerateToken();
-        $csrfTokenUpdated = $previousToken !== $request->session()->token();
-
         $data = $request->validate([
             'username' => 'required|string',
             'data' => 'required|array',
@@ -85,7 +76,6 @@ class PasskeyLoginController extends Controller
             'has_navigator_credentials' => $request->boolean('has_navigator_credentials'),
             'referer' => $request->headers->get('referer'),
             'origin_hint' => $data['origin_hint'] ?? null,
-            'csrf_token_updated' => $csrfTokenUpdated,
         ];
 
         Log::info('Passkey authentication login request started', $logContext);
