@@ -3,6 +3,7 @@
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\BusinessCardController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\DebugController;
 use App\Http\Controllers\PasskeyLoginController;
 use App\Http\Controllers\PasskeyRegistrationController;
 use App\Http\Controllers\UserController;
@@ -22,6 +23,8 @@ $registerBusinessCardRoutes = function () {
         Route::post('/passkeys/options', [PasskeyLoginController::class, 'options'])->name('passkeys.options');
         Route::post('/passkeys/login', [PasskeyLoginController::class, 'login'])->name('passkeys.login');
     });
+
+    Route::post('/debug/passkey-events', [DebugController::class, 'store'])->name('debug.passkey-events');
 
     Route::middleware('auth')->group(function () {
         Route::get('/', function () { return redirect()->route('dashboard'); });

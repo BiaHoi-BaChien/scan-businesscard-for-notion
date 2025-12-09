@@ -135,5 +135,14 @@
     @endif
     {{ $slot ?? '' }}
 </main>
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        document.querySelectorAll('form[action="{{ route('logout') }}"]')?.forEach((form) => {
+            form.addEventListener('submit', () => {
+                sessionStorage.setItem('lastLogoutClick', String(Date.now()));
+            });
+        });
+    });
+</script>
 </body>
 </html>
