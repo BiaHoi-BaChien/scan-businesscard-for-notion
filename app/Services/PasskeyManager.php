@@ -86,12 +86,6 @@ class PasskeyManager
 
         $passkey = $action->execute(json_encode($data), $optionsJson);
 
-        Log::debug('Passkey authenticate lookup result', [
-            'user_id' => $user->id,
-            'passkey_found' => (bool) $passkey,
-            'passkey_class' => $passkey ? get_class($passkey) : null,
-        ]);
-
         if (! $passkey) {
             return false;
         }
@@ -120,14 +114,6 @@ class PasskeyManager
             $timestamp = Carbon::now();
             $cacheAdded = Cache::add($cacheKey, $timestamp->toIso8601String(), $timestamp->copy()->addMinutes(10));
 
-            Log::debug('Passkey resolveOptions using encrypted state', [
-                'method' => 'state',
-                'state_cache_key' => $cacheKey,
-                'state_cache_timestamp' => $timestamp->toIso8601String(),
-                'cache_added' => $cacheAdded,
-                'existing_state_timestamp' => $cacheAdded ? null : Cache::get($cacheKey),
-            ]);
-
             if (! $cacheAdded) {
                 throw new RuntimeException('このパスキー認証オプションはすでに使用されています。もう一度やり直してください。');
             }
@@ -135,26 +121,11 @@ class PasskeyManager
             try {
                 return Crypt::decryptString($state);
             } catch (\Throwable $exception) {
-                Log::debug('Passkey resolveOptions state decrypt failed', [
-                    'method' => 'state',
-                    'state_cache_key' => $cacheKey,
-                    'state_cache_timestamp' => $timestamp->toIso8601String(),
-                    'exception_class' => get_class($exception),
-                    'exception_message' => $exception->getMessage(),
-                ]);
-
                 throw new RuntimeException('パスキー認証オプションが復号できません。', 0, $exception);
             }
         }
 
         $optionsJson = Session::pull($sessionKey);
-
-        Log::debug('Passkey resolveOptions using session', [
-            'method' => 'session',
-            'session_key' => $sessionKey,
-            'session_id' => Session::getId(),
-            'options_available' => is_string($optionsJson) && $optionsJson !== '',
-        ]);
 
         if (! is_string($optionsJson) || $optionsJson === '') {
             throw new RuntimeException('パスキー認証オプションがセッションにありません。もう一度やり直してください。');
