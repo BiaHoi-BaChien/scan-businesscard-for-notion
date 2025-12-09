@@ -29,6 +29,8 @@
         const base64URLToBuffer = (value) => Uint8Array.from(atob(value.replace(/-/g, '+').replace(/_/g, '/')), c => c.charCodeAt(0)).buffer;
         const bufferToBase64URL = (buffer) => btoa(String.fromCharCode(...new Uint8Array(buffer))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 
+        const getCsrfMeta = () => document.querySelector('meta[name="csrf-token"]');
+
         const setMessage = (message, isError = false) => {
             const el = document.getElementById('passkey-login-message');
             if (!el) return;
@@ -65,17 +67,49 @@
             clientExtensionResults: assertion.getClientExtensionResults(),
         });
 
-        const fetchJson = async (url, payload) => {
+        const refreshCsrfToken = async () => {
+            try {
+                const response = await fetch('{{ route('csrf.token') }}', {
+                    method: 'GET',
+                    credentials: 'same-origin',
+                    cache: 'no-store',
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                });
+                const data = await response.json().catch(() => ({}));
+                if (response.ok && data?.token) {
+                    const meta = getCsrfMeta();
+                    if (meta) meta.setAttribute('content', data.token);
+                    return data.token;
+                }
+            } catch (error) {
+                console.error('Failed to refresh CSRF token', error);
+            }
+
+            return null;
+        };
+
+        const fetchJson = async (url, payload, retryOnCsrf = true) => {
+            const csrfMeta = getCsrfMeta();
             const response = await fetch(url, {
                 method: 'POST',
+                credentials: 'same-origin',
+                cache: 'no-store',
                 headers: {
                     'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                    'X-CSRF-TOKEN': csrfMeta?.content || '',
                 },
                 body: JSON.stringify(payload),
             });
 
             const data = await response.json().catch(() => ({}));
+
+            if (!response.ok && retryOnCsrf && response.status === 419) {
+                const refreshed = await refreshCsrfToken();
+                if (refreshed) {
+                    return fetchJson(url, payload, false);
+                }
+            }
+
             if (!response.ok) {
                 throw new Error(data?.message || 'リクエストに失敗しました。');
             }
@@ -98,6 +132,7 @@
             setMessage('パスキー認証の準備中です...');
 
             try {
+                await refreshCsrfToken();
                 const optionPayload = await fetchJson('{{ route('passkeys.options') }}', { username });
                 const publicKey = transformOptions(optionPayload);
 

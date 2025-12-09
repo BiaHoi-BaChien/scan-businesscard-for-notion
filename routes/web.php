@@ -11,6 +11,10 @@ use Illuminate\Support\Facades\Route;
 $businessCardPrefix = trim(config('app.business_card_prefix', 'business_card'), '/');
 
 $registerBusinessCardRoutes = function () {
+    Route::get('/csrf-token', function () {
+        return response()->json(['token' => csrf_token()]);
+    })->name('csrf.token');
+
     Route::middleware('guest')->group(function () {
         Route::get('/login', [AuthController::class, 'showLogin'])->name('login.form');
         Route::post('/login', [AuthController::class, 'login'])->name('login');
