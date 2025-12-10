@@ -63,6 +63,7 @@
         const bufferToBase64URL = (buffer) => btoa(String.fromCharCode(...new Uint8Array(buffer))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
         let inFlight = false;
         let attemptId = 0;
+        const reloadFlagKey = 'passkey-reloaded-after-stale';
 
         const setMessage = (message, isError = false) => {
             const el = document.getElementById('passkey-login-message');
@@ -185,6 +186,12 @@
                     window.location.href = result.redirect;
                 }
             } catch (error) {
+                if ((error?.responseStatus === 419 || error?.responseStatus === 422) && !sessionStorage.getItem(reloadFlagKey)) {
+                    sessionStorage.setItem(reloadFlagKey, '1');
+                    setMessage('Session expired or state invalid. Reloading the page to retry passkey.');
+                    window.location.reload();
+                    return;
+                }
                 setMessage(error?.message || '認証に失敗しました。', true);
             } finally {
                 inFlight = false;
