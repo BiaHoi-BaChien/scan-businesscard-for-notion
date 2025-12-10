@@ -186,9 +186,9 @@
                     window.location.href = result.redirect;
                 }
             } catch (error) {
-                if ((error?.responseStatus === 419 || error?.responseStatus === 422) && !sessionStorage.getItem(reloadFlagKey)) {
+                if (error?.responseStatus === 419 && !sessionStorage.getItem(reloadFlagKey)) {
                     sessionStorage.setItem(reloadFlagKey, '1');
-                    setMessage('Session expired or state invalid. Reloading the page to retry passkey.');
+                    setMessage('Session expired. Reloading the page to retry passkey.');
                     window.location.reload();
                     return;
                 }
