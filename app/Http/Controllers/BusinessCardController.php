@@ -6,7 +6,6 @@ use Closure;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 
 class BusinessCardController extends Controller
@@ -91,12 +90,6 @@ class BusinessCardController extends Controller
         }
 
         $content = $response->json('choices.0.message.content');
-        if (config('app.debug')) {
-            Log::debug('openai.completions.response', [
-                'status' => $response->status(),
-                'body' => $response->json(),
-            ]);
-        }
 
         $decoded = is_string($content) ? json_decode($content, true) : $content;
 
@@ -221,13 +214,6 @@ class BusinessCardController extends Controller
             ],
             'properties' => $payloadProperties,
         ]);
-
-        if (config('app.debug')) {
-            Log::debug('notion.pages.create.response', [
-                'status' => $response->status(),
-                'body' => $response->json(),
-            ]);
-        }
 
         if (! $response->ok()) {
             return back()->withErrors(['notion' => 'Notion登録に失敗しました: '.$response->body()]);

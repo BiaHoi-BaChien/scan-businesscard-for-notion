@@ -6,7 +6,6 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Log;
 
 class AuthController extends Controller
 {
@@ -29,20 +28,12 @@ class AuthController extends Controller
         $user = User::where('username', $credentials['username'])->first();
 
         if (! $user) {
-            if (config('app.debug')) {
-                Log::warning('Login failed: user not found', ['username' => $credentials['username']]);
-            }
-
             return back()->withErrors(['username' => 'ユーザーが見つかりませんでした']);
         }
 
         $passwordProvided = $credentials['password'] ?? null;
 
         if (! $passwordProvided || ! Hash::check($passwordProvided, $user->password)) {
-            if (config('app.debug')) {
-                Log::warning('Login failed: password mismatch', ['username' => $credentials['username']]);
-            }
-
             return back()->withErrors(['password' => '認証に失敗しました'])->withInput();
         }
 
