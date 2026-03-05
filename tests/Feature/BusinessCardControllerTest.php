@@ -137,6 +137,30 @@ class BusinessCardControllerTest extends TestCase
         $this->assertNull(session('analysis'));
     }
 
+
+    public function test_analyze_returns_friendly_message_when_openai_rate_limited(): void
+    {
+        $user = $this->createUser();
+        config(['services.openai.api_key' => 'test-key']);
+
+        Http::fake([
+            'https://api.openai.com/*' => Http::response([
+                'error' => [
+                    'message' => 'Rate limit reached for requests per min',
+                ],
+            ], 429, ['Retry-After' => '12']),
+        ]);
+
+        $response = $this->actingAs($user)->post(route('cards.analyze'), [
+            'front' => $this->createTestImage('front.png'),
+        ]);
+
+        $response->assertStatus(302);
+        $response->assertSessionHasErrors([
+            'analyze' => '解析リクエストが集中しています（429）。しばらく待ってから再実行してください。 目安: 12秒 後に再試行。 詳細: Rate limit reached for requests per min',
+        ]);
+    }
+
     public function test_push_to_notion_builds_properties_from_analysis_and_skips_unmapped_fields(): void
     {
         $user = $this->createUser();
