@@ -6,6 +6,7 @@ use Closure;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
 class BusinessCardController extends Controller
@@ -86,7 +87,7 @@ class BusinessCardController extends Controller
         if (! $response->ok()) {
             session()->forget('analysis');
 
-            return back()->withErrors(['analyze' => '解析に失敗しました: '.$response->status()]);
+            return back()->withErrors(['analyze' => $this->buildOpenAiErrorMessage($response)]);
         }
 
         $content = $response->json('choices.0.message.content');
@@ -128,6 +129,37 @@ class BusinessCardController extends Controller
         return redirect()->route('dashboard')
             ->with('status', '解析が完了しました')
             ->with('toast', 'analysis_complete');
+    }
+
+    private function buildOpenAiErrorMessage($response): string
+    {
+        if ($response->status() !== 429) {
+            return '解析に失敗しました: '.$response->status();
+        }
+
+        $retryAfter = $response->header('Retry-After');
+        $retryAfterText = null;
+
+        if (is_numeric($retryAfter)) {
+            $retryAfterText = $retryAfter.'秒';
+        } elseif (is_string($retryAfter) && trim($retryAfter) !== '') {
+            $retryAfterText = trim($retryAfter);
+        }
+
+        $apiMessage = $response->json('error.message');
+        $apiMessage = is_string($apiMessage) ? trim($apiMessage) : null;
+
+        $message = '解析リクエストが集中しています（429）。しばらく待ってから再実行してください。';
+
+        if ($retryAfterText) {
+            $message .= ' 目安: '.$retryAfterText.' 後に再試行。';
+        }
+
+        if ($apiMessage && ! Str::contains($message, $apiMessage)) {
+            $message .= ' 詳細: '.$apiMessage;
+        }
+
+        return $message;
     }
 
     public function pushToNotion(Request $request)
