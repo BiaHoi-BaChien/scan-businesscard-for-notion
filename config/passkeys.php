@@ -8,12 +8,14 @@ use Spatie\LaravelPasskeys\Actions\GeneratePasskeyAuthenticationOptionsAction;
 use Spatie\LaravelPasskeys\Actions\GeneratePasskeyRegisterOptionsAction;
 use Spatie\LaravelPasskeys\Actions\StorePasskeyAction;
 
+$appPath = rtrim(parse_url(config('app.url'), PHP_URL_PATH) ?? '', '/');
+
 return [
     /*
      * After a successful authentication attempt using a passkey
      * we'll redirect to this URL.
      */
-    'redirect_to_after_login' => '/dashboard',
+    'redirect_to_after_login' => env('PASSKEY_LOGIN_REDIRECT', ($appPath === '' ? '' : $appPath).'/dashboard'),
 
     /*
      * These class are responsible for performing core tasks regarding passkeys.
