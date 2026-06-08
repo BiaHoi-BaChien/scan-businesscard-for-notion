@@ -1,0 +1,61 @@
+name: Deploy to Hostinger
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-hostinger
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    name: Deploy source code
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@8358ee0e2e8afe63c2fb8253d1d52085811ab1e5 # v2
+        with:
+          php-version: "8.5"
+          coverage: none
+
+      - name: Setup Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: "22"
+          cache: npm
+
+      - name: Install PHP dependencies
+        run: composer install --no-dev --prefer-dist --no-interaction --no-progress --optimize-autoloader
+
+      - name: Install frontend dependencies
+        run: npm ci
+
+      - name: Build frontend assets
+        run: npm run build
+
+      - name: Prepare deployment security files
+        run: |
+          printf '%s\n' 'Deny from all' > vendor/.htaccess
+          find storage -type d -exec sh -c 'printf "%s\n" "Deny from all" > "$1/.htaccess"' _ {} \;
+          find bootstrap/cache -type d -exec sh -c 'printf "%s\n" "Deny from all" > "$1/.htaccess"' _ {} \;
+
+      - name: Deploy to Hostinger
+        uses: appleboy/scp-action@ff85246acaad7bdce478db94a363cd2bf7c90345 # v1
+        with:
+          host: ${{ secrets.SCP_HOST }}
+          username: ${{ secrets.SCP_USER }}
+          key: ${{ secrets.SCP_PRIVATE_KEY }}
+          port: ${{ secrets.SCP_PORT }}
+          target: /home/u685478147/public_html/public_html/notion_scan_business_card
+          overwrite: true
+          source: ".htaccess,app,artisan,bootstrap,composer.json,composer.lock,config,database,public,resources,routes,storage,vendor,vite.config.js"
