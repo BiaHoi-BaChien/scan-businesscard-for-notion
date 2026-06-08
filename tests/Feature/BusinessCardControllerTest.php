@@ -166,8 +166,8 @@ class BusinessCardControllerTest extends TestCase
         $user = $this->createUser();
         config([
             'services.notion.api_key' => 'test-key',
-            'services.notion.data_source_id' => 'test-database',
-            'services.notion.version' => '2025-09-03',
+            'services.notion.data_source_id' => 'test-data-source',
+            'services.notion.version' => '2026-03-11',
         ]);
 
         $analysis = [
@@ -199,7 +199,9 @@ class BusinessCardControllerTest extends TestCase
             $properties = $data['properties'] ?? [];
 
             return $request->url() === 'https://api.notion.com/v1/pages'
-                && ($data['parent']['data_source_id'] ?? null) === 'test-database'
+                && $request->hasHeader('Notion-Version', '2026-03-11')
+                && ($data['parent']['type'] ?? null) === 'data_source_id'
+                && ($data['parent']['data_source_id'] ?? null) === 'test-data-source'
                 && ($properties['名前']['title'][0]['text']['content'] ?? null) === '山田 太郎'
                 && ($properties['会社名']['rich_text'][0]['text']['content'] ?? null) === 'ACME Inc.'
                 && ($properties['役職']['rich_text'][0]['text']['content'] ?? null) === 'CTO'
@@ -212,8 +214,8 @@ class BusinessCardControllerTest extends TestCase
         $user = $this->createUser();
         config([
             'services.notion.api_key' => 'test-key',
-            'services.notion.data_source_id' => 'test-database',
-            'services.notion.version' => '2025-09-03',
+            'services.notion.data_source_id' => 'test-data-source',
+            'services.notion.version' => '2026-03-11',
         ]);
 
         Http::fake([

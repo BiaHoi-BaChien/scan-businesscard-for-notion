@@ -7,7 +7,7 @@ return [
     'notion' => [
         'api_key' => env('NOTION_API_KEY'),
         'data_source_id' => env('NOTION_DATA_SOURCE_ID'),
-        'version' => env('NOTION_VERSION', '2025-09-03'),
+        'version' => env('NOTION_VERSION', '2026-03-11'),
         'property_mapping' => env('NOTION_PROPERTY_MAPPING'),
     ],
 ];
