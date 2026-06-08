@@ -7,12 +7,14 @@ Options -Indexes
     RewriteRule ^(?:\.env(?:\..*)?|\.git|\.github)(?:/|$) - [F,L,NC]
     RewriteRule ^(?:artisan|composer\.(?:json|lock)|package(?:-lock)?\.json|phpunit\.xml(?:\.dist)?|vite\.config\.js|README\.md|LICENSE)$ - [F,L,NC]
 
-    RewriteRule ^$ public/ [L]
+    RewriteRule ^$ public/index.php [L]
+    RewriteRule ^index\.php(?:/(.*))?$ public/index.php/$1 [L,QSA]
+    RewriteRule ^((?:favicon\.(?:ico|png|svg)|build/.+))$ public/$1 [L,NC]
 
     RewriteCond %{REQUEST_URI} !/public/ [NC]
     RewriteCond %{REQUEST_FILENAME} !-f
     RewriteCond %{REQUEST_FILENAME} !-d
-    RewriteRule ^(.*)$ public/$1 [L]
+    RewriteRule ^(.*)$ public/index.php/$1 [L,QSA]
 </IfModule>
 
 <FilesMatch "^(?:\.env(?:\..*)?|composer\.(?:json|lock)|package(?:-lock)?\.json|phpunit\.xml(?:\.dist)?|vite\.config\.js|artisan|README\.md|LICENSE)$">
