@@ -35,9 +35,9 @@
 | `AUTH_SECRET` | パスワードを暗号化し、管理者作成コマンドで利用する鍵。未設定の場合はコマンドがエラーになります。 |
 | `OPENAI_API_KEY` | OpenAI API キー。 |
 | `NOTION_API_KEY` | Notion のインテグレーションシークレット。 |
-| `NOTION_DATA_SOURCE_ID` | 登録先データベース ID。 |
+| `NOTION_DATA_SOURCE_ID` | 登録先データソース ID。 |
 | `NOTION_PROPERTY_MAPPING` | Notion のプロパティ対応表 JSON。例: `{ "name": {"name": "名前", "type": "title"} }` |
-| `NOTION_VERSION` | Notion API バージョン（例: `2025-09-03`）。 |
+| `NOTION_VERSION` | Notion API バージョン（例: `2026-03-11`）。 |
 
 ## 認証と管理者
 
@@ -67,7 +67,7 @@ php artisan user:check-password {username} {password}
 ## Notion への登録
 
 - `NOTION_PROPERTY_MAPPING` の JSON により、解析結果のフィールド名と Notion プロパティを対応付けます。
-- Notion API キーは、対象データベースに対して閲覧・編集権限を持つインテグレーションで発行してください。
+- Notion API キーは、対象データソースを含むデータベースに対して閲覧・編集権限を持つインテグレーションで発行してください。
 
 ## テスト・ビルド
 
