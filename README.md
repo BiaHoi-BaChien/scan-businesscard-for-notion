@@ -13,12 +13,12 @@
 ## セットアップ手順
 
 1. リポジトリをクローンします。
-2. `.env.example` を `.env` にコピーし、後述の環境変数（`AUTH_SECRET`、`OPENAI_API_KEY`、`NOTION_API_KEY`、`NOTION_DATA_SOURCE_ID`、`NOTION_VERSION`、`NOTION_PROPERTY_MAPPING` など）を設定します。
+2. `.env.example` を `.env` にコピーし、後述の環境変数（`OPENAI_API_KEY`、`NOTION_API_KEY`、`NOTION_DATA_SOURCE_ID`、`NOTION_VERSION`、`NOTION_PROPERTY_MAPPING` など）を設定します。
 3. 依存関係をインストールします。
    - バックエンド: `composer install`
    - フロントエンド: `npm install`
 4. SQLite を利用する場合は、`.env` の `DB_DATABASE` で指定したパスに空のファイルを作成します（例: `touch database/database.sqlite`）。
-5. マイグレーションと管理者作成コマンドを実行します（`AUTH_SECRET` が未設定の場合、エラーとなります）。
+5. マイグレーションと管理者作成コマンドを実行します。
    - `php artisan migrate`
    - `php artisan user:create-admin`
 6. 開発サーバーを起動します。
@@ -32,7 +32,6 @@
 | 変数名 | 説明 |
 | --- | --- |
 | `DB_DATABASE` | SQLite ファイルのパス。例: `database/database.sqlite` |
-| `AUTH_SECRET` | パスワードを暗号化し、管理者作成コマンドで利用する鍵。未設定の場合はコマンドがエラーになります。 |
 | `OPENAI_API_KEY` | OpenAI API キー。 |
 | `NOTION_API_KEY` | Notion のインテグレーションシークレット。 |
 | `NOTION_DATA_SOURCE_ID` | 登録先データソース ID。 |
@@ -42,7 +41,8 @@
 ## 認証と管理者
 
 - ログインはパスワード認証で行います。
-- 既定の管理者は `php artisan user:create-admin` を実行し、対話的にユーザー名とパスワードを入力して作成します（`AUTH_SECRET` が必須）。
+- 既定の管理者は `php artisan user:create-admin` を実行し、対話的にユーザー名とパスワードを入力して作成します。
+- パスワードは復号できないhashのみをデータベースへ保存します。
 - 管理者はアプリ内のユーザー管理画面からユーザーを追加・削除できます（権限のないユーザーは操作できません）。
 - [spatie/laravel-passkeys](https://github.com/spatie/laravel-passkeys) を使ったパスキー認証に対応しています。`composer install` で依存関係を取得後、`php artisan migrate` を実行すると `passkeys` テーブルが作成されます。ログイン画面の「パスキーを使用する」ボタンやダッシュボードの「パスキー登録」カードからセットアップできます。
 

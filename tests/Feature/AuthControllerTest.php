@@ -21,7 +21,6 @@ class AuthControllerTest extends TestCase
         $user = User::create([
             'username' => 'user_'.Str::random(8),
             'password' => Hash::make('password123'),
-            'encrypted_password' => base64_encode('password123'),
         ]);
 
         Session::start();
