@@ -18,8 +18,12 @@ Route::middleware('guest')->group(function () {
         ->middleware('throttle:login')
         ->name('login');
 
-    Route::post('/passkeys/options', [PasskeyLoginController::class, 'options'])->name('passkeys.options');
-    Route::post('/passkeys/login', [PasskeyLoginController::class, 'login'])->name('passkeys.login');
+    Route::post('/passkeys/options', [PasskeyLoginController::class, 'options'])
+        ->middleware('throttle:passkeyLogin')
+        ->name('passkeys.options');
+    Route::post('/passkeys/login', [PasskeyLoginController::class, 'login'])
+        ->middleware('throttle:passkeyLogin')
+        ->name('passkeys.login');
 });
 
 Route::middleware('auth')->group(function () {
@@ -27,8 +31,12 @@ Route::middleware('auth')->group(function () {
     Route::get('/dashboard', DashboardController::class)->name('dashboard');
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
-    Route::post('/passkeys/register/options', [PasskeyRegistrationController::class, 'options'])->name('passkeys.register.options');
-    Route::post('/passkeys/register', [PasskeyRegistrationController::class, 'store'])->name('passkeys.register');
+    Route::post('/passkeys/register/options', [PasskeyRegistrationController::class, 'options'])
+        ->middleware('throttle:passkeyRegistration')
+        ->name('passkeys.register.options');
+    Route::post('/passkeys/register', [PasskeyRegistrationController::class, 'store'])
+        ->middleware('throttle:passkeyRegistration')
+        ->name('passkeys.register');
 
     Route::post('/analyze', [BusinessCardController::class, 'analyze'])->name('cards.analyze');
     Route::post('/notion', [BusinessCardController::class, 'pushToNotion'])->name('cards.notion');

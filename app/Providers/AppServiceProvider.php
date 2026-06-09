@@ -27,6 +27,25 @@ class AppServiceProvider extends ServiceProvider
             ];
         });
 
+        RateLimiter::for('passkeyLogin', function (Request $request) {
+            $username = Str::lower(trim((string) $request->input('username')));
+
+            return [
+                Limit::perMinute(5)->by($username.'|'.$request->ip()),
+                Limit::perMinute(20)->by($request->ip()),
+            ];
+        });
+
+        RateLimiter::for('passkeyRegistration', function (Request $request) {
+            $userId = (string) $request->user()?->getAuthIdentifier();
+
+            return [
+                Limit::perMinute(5)->by($userId.'|'.$request->ip()),
+                Limit::perMinute(10)->by($userId),
+                Limit::perMinute(20)->by($request->ip()),
+            ];
+        });
+
         $appUrl = config('app.url');
 
         if (is_string($appUrl) && $appUrl !== '') {
