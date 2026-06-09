@@ -14,7 +14,9 @@ Route::get('/csrf-token', function () {
 
 Route::middleware('guest')->group(function () {
     Route::get('/login', [AuthController::class, 'showLogin'])->name('login.form');
-    Route::post('/login', [AuthController::class, 'login'])->name('login');
+    Route::post('/login', [AuthController::class, 'login'])
+        ->middleware('throttle:login')
+        ->name('login');
 
     Route::post('/passkeys/options', [PasskeyLoginController::class, 'options'])->name('passkeys.options');
     Route::post('/passkeys/login', [PasskeyLoginController::class, 'login'])->name('passkeys.login');
