@@ -32,6 +32,17 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
+        $exceptions->render(function (
+            \Illuminate\Http\Exceptions\ThrottleRequestsException $exception,
+            \Illuminate\Http\Request $request
+        ) {
+            if ($request->wantsJson()) {
+                return response()->json([
+                    'message' => '試行回数が多すぎます。しばらく待ってから再試行してください。',
+                ], 429, $exception->getHeaders());
+            }
+        });
+
         $exceptions->render(function (\Throwable $e, \Illuminate\Http\Request $request) {
             if ($request->wantsJson()) {
                 return response()->json([
