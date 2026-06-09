@@ -20,14 +20,6 @@ class CreateAdminUser extends Command
 
     public function handle(): int
     {
-        $authSecret = env('AUTH_SECRET');
-
-        if (! $authSecret) {
-            $this->error('AUTH_SECRET is not set. Please configure it in your .env file before creating an admin user.');
-
-            return self::FAILURE;
-        }
-
         $username = $this->option('username') ?? $this->ask('Admin username');
 
         if (! is_string($username) || trim($username) === '') {
@@ -46,25 +38,10 @@ class CreateAdminUser extends Command
             return self::FAILURE;
         }
 
-        $encrypted = openssl_encrypt(
-            $password,
-            'AES-256-CBC',
-            hash('sha256', $authSecret),
-            0,
-            substr(hash('sha256', $authSecret), 0, 16)
-        );
-
-        if ($encrypted === false) {
-            $this->error('Failed to encrypt the password.');
-
-            return self::FAILURE;
-        }
-
         User::updateOrCreate(
             ['username' => $username],
             [
                 'password' => Hash::make($password),
-                'encrypted_password' => base64_encode($encrypted),
                 'is_admin' => true,
             ]
         );
