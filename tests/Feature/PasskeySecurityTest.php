@@ -8,7 +8,12 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 use Mockery\MockInterface;
+use ParagonIE\ConstantTime\Base64UrlSafe;
+use Symfony\Component\Uid\Uuid;
 use Tests\TestCase;
+use Webauthn\PublicKeyCredentialDescriptor;
+use Webauthn\PublicKeyCredentialSource;
+use Webauthn\TrustPath\EmptyTrustPath;
 
 class PasskeySecurityTest extends TestCase
 {
@@ -130,6 +135,23 @@ class PasskeySecurityTest extends TestCase
             ->assertHeader('Retry-After');
     }
 
+    public function test_passkey_registration_options_exclude_existing_credentials(): void
+    {
+        $user = $this->createUser();
+        $credentialId = 'existing-credential-id';
+
+        $user->passkeys()->create([
+            'name' => 'Existing passkey',
+            'data' => $this->createCredentialSource($credentialId),
+        ]);
+
+        $this->actingAs($user)
+            ->postJson(route('passkeys.register.options'))
+            ->assertOk()
+            ->assertJsonPath('options.excludeCredentials.0.type', PublicKeyCredentialDescriptor::CREDENTIAL_TYPE_PUBLIC_KEY)
+            ->assertJsonPath('options.excludeCredentials.0.id', Base64UrlSafe::encodeUnpadded($credentialId));
+    }
+
     public function test_layout_loads_alpine_from_the_local_vite_bundle(): void
     {
         $response = $this->get(route('login.form'));
@@ -145,5 +167,20 @@ class PasskeySecurityTest extends TestCase
             'username' => 'user_'.Str::random(8),
             'password' => Hash::make('password123'),
         ]);
+    }
+
+    private function createCredentialSource(string $credentialId): PublicKeyCredentialSource
+    {
+        return PublicKeyCredentialSource::create(
+            $credentialId,
+            PublicKeyCredentialDescriptor::CREDENTIAL_TYPE_PUBLIC_KEY,
+            [PublicKeyCredentialDescriptor::AUTHENTICATOR_TRANSPORT_INTERNAL],
+            'none',
+            EmptyTrustPath::create(),
+            Uuid::fromString('00000000-0000-0000-0000-000000000000'),
+            base64_decode('pQECAyYgASFYIJV56vRrFusoDf9hm3iDmllcxxXzzKyO9WruKw4kWx7zIlgg/nq63l8IMJcIdKDJcXRh9hoz0L+nVwP1Oxil3/oNQYs=', true),
+            'user-handle',
+            0,
+        );
     }
 }

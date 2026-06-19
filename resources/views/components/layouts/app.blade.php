@@ -63,14 +63,13 @@
         .wave-char:nth-child(3n) { animation-delay: 0.24s; }
         .overlay-card { min-width: 320px; text-align: center; }
         main.container { padding-top: 1.5rem; padding-bottom: 2rem; }
-        nav button.contrast { white-space: nowrap; }
         nav li strong { color: var(--text); }
         .app-nav { display: flex; gap: 1rem; align-items: flex-start; justify-content: space-between; flex-wrap: wrap; }
         .app-brand { display: grid; gap: 0.3rem; }
         .app-title { margin: 0; color: var(--text); }
         .app-user { display: inline-flex; gap: 0.4rem; align-items: center; flex-wrap: wrap; color: var(--muted); font-weight: 600; }
-        .app-actions { display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; justify-content: flex-end; }
-        .app-actions form { margin: 0; }
+        .app-footer { padding-top: 0; padding-bottom: 2rem; }
+        .app-footer form { margin: 0; }
         @media (min-width: 720px) {
             .app-nav { align-items: center; }
         }
@@ -90,11 +89,6 @@
                     </div>
                 @endauth
             </div>
-            @auth
-                <div class="app-actions">
-                    <form method="POST" action="{{ route('logout') }}">@csrf<button type="submit" class="contrast">ログアウト</button></form>
-                </div>
-            @endauth
         </div>
     </nav>
 </header>
@@ -123,6 +117,14 @@
     @endif
     {{ $slot ?? '' }}
 </main>
+@auth
+    <footer class="container app-footer">
+        <form method="POST" action="{{ route('logout') }}">
+            @csrf
+            <button type="submit" class="contrast">ログアウト</button>
+        </form>
+    </footer>
+@endauth
 <script>
     document.addEventListener('DOMContentLoaded', () => {
         document.querySelectorAll('form[action="{{ route('logout') }}"]')?.forEach((form) => {

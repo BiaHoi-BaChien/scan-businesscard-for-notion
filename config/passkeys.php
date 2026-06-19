@@ -1,11 +1,11 @@
 <?php
 
+use App\Actions\ConfigureCeremonyStepManagerFactoryAction;
+use App\Actions\GeneratePasskeyRegisterOptionsAction;
 use App\Models\Passkey;
 use App\Models\User;
-use App\Actions\ConfigureCeremonyStepManagerFactoryAction;
 use Spatie\LaravelPasskeys\Actions\FindPasskeyToAuthenticateAction;
 use Spatie\LaravelPasskeys\Actions\GeneratePasskeyAuthenticationOptionsAction;
-use Spatie\LaravelPasskeys\Actions\GeneratePasskeyRegisterOptionsAction;
 use Spatie\LaravelPasskeys\Actions\StorePasskeyAction;
 
 $appPath = rtrim(parse_url(config('app.url'), PHP_URL_PATH) ?? '', '/');
