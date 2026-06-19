@@ -63,14 +63,14 @@
         .wave-char:nth-child(3n) { animation-delay: 0.24s; }
         .overlay-card { min-width: 320px; text-align: center; }
         main.container { padding-top: 1.5rem; padding-bottom: 2rem; }
-        nav button.contrast { white-space: nowrap; }
         nav li strong { color: var(--text); }
         .app-nav { display: flex; gap: 1rem; align-items: flex-start; justify-content: space-between; flex-wrap: wrap; }
         .app-brand { display: grid; gap: 0.3rem; }
         .app-title { margin: 0; color: var(--text); }
         .app-user { display: inline-flex; gap: 0.4rem; align-items: center; flex-wrap: wrap; color: var(--muted); font-weight: 600; }
         .app-actions { display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; justify-content: flex-end; }
-        .app-actions form { margin: 0; }
+        .app-footer { padding-top: 0; padding-bottom: 2rem; }
+        .app-footer form { margin: 0; }
         .user-list { list-style: none; padding: 0; margin: 0; display: grid; gap: 0.85rem; }
         .user-card { border: 1px solid var(--border); border-radius: 0.9rem; padding: 0.9rem 1rem; background: var(--card-bg); box-shadow: var(--shadow); display: grid; gap: 0.65rem; }
         .user-header { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; flex-wrap: wrap; }
@@ -99,14 +99,11 @@
                     </div>
                 @endauth
             </div>
-            @auth
+            @if(auth()->check() && request()->routeIs('users.index'))
                 <div class="app-actions">
-                    @if(request()->routeIs('users.index'))
-                        <a href="{{ route('dashboard') }}" role="button" class="secondary">ダッシュボードに戻る</a>
-                    @endif
-                    <form method="POST" action="{{ route('logout') }}">@csrf<button type="submit" class="contrast">ログアウト</button></form>
+                    <a href="{{ route('dashboard') }}" role="button" class="secondary">ダッシュボードに戻る</a>
                 </div>
-            @endauth
+            @endif
         </div>
     </nav>
 </header>
@@ -135,6 +132,14 @@
     @endif
     {{ $slot ?? '' }}
 </main>
+@auth
+    <footer class="container app-footer">
+        <form method="POST" action="{{ route('logout') }}">
+            @csrf
+            <button type="submit" class="contrast">ログアウト</button>
+        </form>
+    </footer>
+@endauth
 <script>
     document.addEventListener('DOMContentLoaded', () => {
         document.querySelectorAll('form[action="{{ route('logout') }}"]')?.forEach((form) => {

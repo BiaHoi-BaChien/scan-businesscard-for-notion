@@ -36,6 +36,19 @@ class AuthControllerTest extends TestCase
         $this->assertNotSame($oldSessionId, Session::getId());
     }
 
+    public function test_logout_button_is_rendered_after_main_content(): void
+    {
+        $user = User::create([
+            'username' => 'user_'.Str::random(8),
+            'password' => Hash::make('password123'),
+        ]);
+
+        $this->actingAs($user)
+            ->get(route('dashboard'))
+            ->assertOk()
+            ->assertSeeInOrder(['</main>', 'ログアウト'], false);
+    }
+
     public function test_login_is_rate_limited_by_username_and_ip(): void
     {
         $user = User::create([
