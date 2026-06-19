@@ -71,17 +71,8 @@
         .app-user { display: inline-flex; gap: 0.4rem; align-items: center; flex-wrap: wrap; color: var(--muted); font-weight: 600; }
         .app-actions { display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; justify-content: flex-end; }
         .app-actions form { margin: 0; }
-        .user-list { list-style: none; padding: 0; margin: 0; display: grid; gap: 0.85rem; }
-        .user-card { border: 1px solid var(--border); border-radius: 0.9rem; padding: 0.9rem 1rem; background: var(--card-bg); box-shadow: var(--shadow); display: grid; gap: 0.65rem; }
-        .user-header { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; flex-wrap: wrap; }
-        .user-meta { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; color: var(--muted); }
-        .user-actions { display: grid; gap: 0.5rem; grid-auto-flow: row; }
-        .user-actions form { margin: 0; }
-        .role-pill { padding: 0.25rem 0.55rem; border-radius: 999px; background: var(--primary-soft); color: var(--primary); font-weight: 700; font-size: 0.85rem; letter-spacing: 0.03em; }
         @media (min-width: 720px) {
             .app-nav { align-items: center; }
-            .user-card { grid-template-columns: 1fr auto; align-items: center; }
-            .user-actions { grid-auto-flow: column; grid-auto-columns: max-content; justify-content: flex-end; }
         }
         form button.primary { background: var(--primary); border-color: var(--primary); }
         form button.primary:hover { filter: brightness(0.92); }
@@ -101,9 +92,6 @@
             </div>
             @auth
                 <div class="app-actions">
-                    @if(request()->routeIs('users.index'))
-                        <a href="{{ route('dashboard') }}" role="button" class="secondary">ダッシュボードに戻る</a>
-                    @endif
                     <form method="POST" action="{{ route('logout') }}">@csrf<button type="submit" class="contrast">ログアウト</button></form>
                 </div>
             @endauth

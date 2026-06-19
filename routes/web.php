@@ -5,7 +5,6 @@ use App\Http\Controllers\BusinessCardController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\PasskeyLoginController;
 use App\Http\Controllers\PasskeyRegistrationController;
-use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/csrf-token', function () {
@@ -42,10 +41,4 @@ Route::middleware('auth')->group(function () {
     Route::post('/notion', [BusinessCardController::class, 'pushToNotion'])->name('cards.notion');
     Route::post('/clear', [BusinessCardController::class, 'clear'])->name('cards.clear');
 
-    Route::middleware('admin')->group(function () {
-        Route::get('/users', [UserController::class, 'index'])->name('users.index');
-        Route::post('/users', [UserController::class, 'store'])->name('users.store');
-        Route::patch('/users/{user}', [UserController::class, 'update'])->name('users.update');
-        Route::delete('/users/{user}', [UserController::class, 'destroy'])->name('users.destroy');
-    });
 });

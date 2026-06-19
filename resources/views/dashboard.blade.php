@@ -156,17 +156,6 @@
             </div>
         </article>
     </section>
-
-    @if(auth()->user()->is_admin)
-        <section style="margin-top:1.5rem; align-items:stretch;">
-            <article class="panel">
-                <header class="grid" style="gap:0.25rem;">
-                    <h3 style="margin:0;">ユーザー管理</h3>
-                </header>
-                <a href="{{ route('users.index') }}" role="button" class="secondary">管理画面へ</a>
-            </article>
-        </section>
-    @endif
 </x-layouts.app>
 <script>
     function deviceState() {
