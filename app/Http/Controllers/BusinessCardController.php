@@ -3,8 +3,9 @@
 namespace App\Http\Controllers;
 
 use Closure;
-use Illuminate\Http\UploadedFile;
 use Illuminate\Http\Request;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
@@ -13,6 +14,7 @@ class BusinessCardController extends Controller
 {
     private string $browserUserAgent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 '
         .'(KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36';
+
     private array $imageExtensions = ['jpg', 'jpeg', 'png'];
 
     // 画像を保存せず、そのままOpenAIに渡して解析する
@@ -69,23 +71,36 @@ class BusinessCardController extends Controller
         ];
 
         $encodedImages = array_map(fn ($path) => base64_encode(file_get_contents($path)), $images);
-        session()->forget('analysis');
-        $response = Http::withHeaders([
-            'User-Agent' => $this->browserUserAgent,
-        ])->withToken($apiKey)->post('https://api.openai.com/v1/chat/completions', [
-            'model' => 'gpt-4o-mini',
-            'messages' => [
-                ['role' => 'system', 'content' => 'Extract business card fields and answer in JSON.'],
-                ['role' => 'user', 'content' => [
-                    ['type' => 'text', 'text' => $prompt],
-                    ...array_map(fn ($img) => ['type' => 'image_url', 'image_url' => ['url' => 'data:image/png;base64,'.$img]], $encodedImages),
-                ]],
-            ],
-            'response_format' => ['type' => 'json_object'],
-        ]);
+        session()->forget(['analysis', 'analysis_submission_id', 'analysis_notion_result']);
+        $analysisLock = Cache::lock(
+            'openai-analysis:'.(string) $request->user()->getAuthIdentifier(),
+            60
+        );
+
+        if (! $analysisLock->get()) {
+            return back()->withErrors(['analyze' => '解析処理中です。完了してから再実行してください']);
+        }
+
+        try {
+            $response = Http::withHeaders([
+                'User-Agent' => $this->browserUserAgent,
+            ])->withToken($apiKey)->post('https://api.openai.com/v1/chat/completions', [
+                'model' => 'gpt-4o-mini',
+                'messages' => [
+                    ['role' => 'system', 'content' => 'Extract business card fields and answer in JSON.'],
+                    ['role' => 'user', 'content' => [
+                        ['type' => 'text', 'text' => $prompt],
+                        ...array_map(fn ($img) => ['type' => 'image_url', 'image_url' => ['url' => 'data:image/png;base64,'.$img]], $encodedImages),
+                    ]],
+                ],
+                'response_format' => ['type' => 'json_object'],
+            ]);
+        } finally {
+            $analysisLock->release();
+        }
 
         if (! $response->ok()) {
-            session()->forget('analysis');
+            session()->forget(['analysis', 'analysis_submission_id', 'analysis_notion_result']);
 
             return back()->withErrors(['analyze' => $this->buildOpenAiErrorMessage($response)]);
         }
@@ -95,7 +110,8 @@ class BusinessCardController extends Controller
         $decoded = is_string($content) ? json_decode($content, true) : $content;
 
         if (! is_array($decoded)) {
-            session()->forget('analysis');
+            session()->forget(['analysis', 'analysis_submission_id', 'analysis_notion_result']);
+
             return back()->withErrors(['analyze' => '解析結果の形式が不正です']);
         }
 
@@ -124,7 +140,10 @@ class BusinessCardController extends Controller
         $decoded = array_merge($decoded, $normalized);
         $analysis = array_merge($analysis, $decoded);
 
-        session()->put('analysis', $analysis);
+        session()->put([
+            'analysis' => $analysis,
+            'analysis_submission_id' => (string) Str::uuid(),
+        ]);
 
         return redirect()->route('dashboard')
             ->with('status', '解析が完了しました')
@@ -177,6 +196,34 @@ class BusinessCardController extends Controller
             throw ValidationException::withMessages([
                 'notion' => 'Notionの設定が不足しています',
             ]);
+        }
+
+        $submissionId = session('analysis_submission_id');
+        if (! is_string($submissionId) || $submissionId === '') {
+            return back()->withErrors(['notion' => '解析結果が古いため、もう一度解析してください']);
+        }
+
+        $notionResult = session('analysis_notion_result');
+        if (($notionResult['submission_id'] ?? null) === $submissionId) {
+            return $this->notionSuccessResponse($notionResult['url'] ?? null, $submissionId);
+        }
+
+        $cacheKey = 'notion-submission:'
+            .(string) $request->user()->getAuthIdentifier()
+            .':'.hash('sha256', $submissionId);
+        $submission = Cache::get($cacheKey);
+
+        if (($submission['status'] ?? null) === 'completed') {
+            return $this->notionSuccessResponse($submission['url'] ?? null, $submissionId);
+        }
+
+        if (! Cache::add($cacheKey, ['status' => 'processing'], now()->addMinutes(5))) {
+            $submission = Cache::get($cacheKey);
+            if (($submission['status'] ?? null) === 'completed') {
+                return $this->notionSuccessResponse($submission['url'] ?? null, $submissionId);
+            }
+
+            return back()->withErrors(['notion' => 'Notionへの登録処理中です。しばらくお待ちください']);
         }
 
         $fields = [
@@ -248,11 +295,27 @@ class BusinessCardController extends Controller
         ]);
 
         if (! $response->ok()) {
+            Cache::forget($cacheKey);
+
             return back()->withErrors(['notion' => 'Notion登録に失敗しました: '.$response->body()]);
         }
 
         $pageUrl = $response->json('url');
         $pageUrl = is_string($pageUrl) && $pageUrl !== '' ? $pageUrl : null;
+        Cache::put($cacheKey, [
+            'status' => 'completed',
+            'url' => $pageUrl,
+        ], now()->addDay());
+
+        return $this->notionSuccessResponse($pageUrl, $submissionId);
+    }
+
+    private function notionSuccessResponse(?string $pageUrl, string $submissionId)
+    {
+        session()->put('analysis_notion_result', [
+            'submission_id' => $submissionId,
+            'url' => $pageUrl,
+        ]);
 
         return back()->with('status', 'Notionへの登録が完了しました')
             ->with('toast', 'notion_complete')
@@ -261,7 +324,8 @@ class BusinessCardController extends Controller
 
     public function clear()
     {
-        session()->forget('analysis');
+        session()->forget(['analysis', 'analysis_submission_id', 'analysis_notion_result']);
+
         return redirect()->route('dashboard')->with('status', '選択画像と解析結果をクリアしました');
     }
 

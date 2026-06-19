@@ -46,6 +46,28 @@ class AppServiceProvider extends ServiceProvider
             ];
         });
 
+        RateLimiter::for('cardAnalysis', function (Request $request) {
+            $userId = (string) $request->user()?->getAuthIdentifier();
+
+            return [
+                Limit::perMinute(3)->by('user-minute|'.$userId),
+                Limit::perHour(30)->by('user-hour|'.$userId),
+                Limit::perMinute(10)->by('ip-minute|'.$request->ip()),
+                Limit::perHour(60)->by('ip-hour|'.$request->ip()),
+            ];
+        });
+
+        RateLimiter::for('notionPageCreation', function (Request $request) {
+            $userId = (string) $request->user()?->getAuthIdentifier();
+
+            return [
+                Limit::perMinute(5)->by('user-minute|'.$userId),
+                Limit::perHour(30)->by('user-hour|'.$userId),
+                Limit::perMinute(15)->by('ip-minute|'.$request->ip()),
+                Limit::perHour(60)->by('ip-hour|'.$request->ip()),
+            ];
+        });
+
         $appUrl = config('app.url');
 
         if (is_string($appUrl) && $appUrl !== '') {

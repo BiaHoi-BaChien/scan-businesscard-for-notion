@@ -26,7 +26,9 @@ Route::middleware('guest')->group(function () {
 });
 
 Route::middleware('auth')->group(function () {
-    Route::get('/', function () { return redirect()->route('dashboard'); });
+    Route::get('/', function () {
+        return redirect()->route('dashboard');
+    });
     Route::get('/dashboard', DashboardController::class)->name('dashboard');
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
@@ -37,8 +39,12 @@ Route::middleware('auth')->group(function () {
         ->middleware('throttle:passkeyRegistration')
         ->name('passkeys.register');
 
-    Route::post('/analyze', [BusinessCardController::class, 'analyze'])->name('cards.analyze');
-    Route::post('/notion', [BusinessCardController::class, 'pushToNotion'])->name('cards.notion');
+    Route::post('/analyze', [BusinessCardController::class, 'analyze'])
+        ->middleware('throttle:cardAnalysis')
+        ->name('cards.analyze');
+    Route::post('/notion', [BusinessCardController::class, 'pushToNotion'])
+        ->middleware('throttle:notionPageCreation')
+        ->name('cards.notion');
     Route::post('/clear', [BusinessCardController::class, 'clear'])->name('cards.clear');
 
 });
