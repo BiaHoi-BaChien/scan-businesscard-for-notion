@@ -38,12 +38,12 @@
 | `NOTION_PROPERTY_MAPPING` | Notion のプロパティ対応表 JSON。例: `{ "name": {"name": "名前", "type": "title"} }` |
 | `NOTION_VERSION` | Notion API バージョン（例: `2026-03-11`）。 |
 
-## 認証と管理者
+## 認証とユーザー
 
 - ログインはパスワード認証で行います。
-- 既定の管理者は `php artisan user:create-admin` を実行し、対話的にユーザー名とパスワードを入力して作成します。
+- 初期ユーザーは `php artisan user:create-admin` を実行し、対話的にユーザー名とパスワードを入力して作成します。
+- アプリ内からユーザーを追加・削除することはできません。初期ユーザーのみで運用します。
 - パスワードは復号できないhashのみをデータベースへ保存します。
-- 管理者はアプリ内のユーザー管理画面からユーザーを追加・削除できます（権限のないユーザーは操作できません）。
 - [spatie/laravel-passkeys](https://github.com/spatie/laravel-passkeys) を使ったパスキー認証に対応しています。`composer install` で依存関係を取得後、`php artisan migrate` を実行すると `passkeys` テーブルが作成されます。ログイン画面の「パスキーを使用する」ボタンやダッシュボードの「パスキー登録」カードからセットアップできます。
 
 ### パスワードのハッシュ検証
