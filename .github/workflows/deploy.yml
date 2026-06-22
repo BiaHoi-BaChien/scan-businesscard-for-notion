@@ -62,3 +62,58 @@ jobs:
           target: /home/u685478147/public_html/public_html/notion_scan_business_card
           overwrite: true
           source: ".htaccess,app,artisan,bootstrap,composer.json,composer.lock,config,database,public,resources,routes,storage,vendor,vite.config.js"
+
+      - name: Smoke test deployed application
+        env:
+          BASE_URL: https://clb-biahoi.net/notion_scan_business_card
+        run: |
+          set -euo pipefail
+
+          curl_options=(
+            --silent
+            --show-error
+            --location
+            --fail
+            --retry 5
+            --retry-delay 3
+            --retry-all-errors
+            --connect-timeout 10
+            --max-time 30
+          )
+
+          login_page="$(mktemp)"
+          trap 'rm -f "$login_page"' EXIT
+
+          echo "Checking login page"
+          curl "${curl_options[@]}" "$BASE_URL/login" --output "$login_page"
+          grep -q '<h1>ログイン</h1>' "$login_page"
+
+          mapfile -t asset_urls < <(
+            grep -oE '(src|href)="[^"]*/build/assets/[^"]+"' "$login_page" |
+              sed -E 's/^(src|href)="([^"]+)"$/\2/' |
+              sort -u
+          )
+
+          if (( ${#asset_urls[@]} == 0 )); then
+            echo "No Vite build assets were found in the login page" >&2
+            exit 1
+          fi
+
+          for asset_url in "${asset_urls[@]}"; do
+            echo "Checking Vite asset: $asset_url"
+            curl "${curl_options[@]}" "$asset_url" --output /dev/null
+          done
+
+          for protected_path in .env composer.json composer.lock artisan vite.config.js; do
+            status="$(
+              curl --silent --show-error --output /dev/null --write-out '%{http_code}' \
+                --retry 5 --retry-delay 3 --retry-all-errors \
+                --connect-timeout 10 --max-time 30 \
+                "$BASE_URL/$protected_path"
+            )"
+            echo "Checking protected path: $protected_path (HTTP $status)"
+            if [[ "$status" != "403" && "$status" != "404" ]]; then
+              echo "Protected path returned unexpected HTTP status: $protected_path ($status)" >&2
+              exit 1
+            fi
+          done
