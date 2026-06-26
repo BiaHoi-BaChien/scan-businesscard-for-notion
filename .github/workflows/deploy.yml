@@ -20,7 +20,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
 
       - name: Setup PHP
         uses: shivammathur/setup-php@8358ee0e2e8afe63c2fb8253d1d52085811ab1e5 # v2
@@ -29,7 +29,7 @@ jobs:
           coverage: none
 
       - name: Setup Node.js
-        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
         with:
           node-version: "22"
           cache: npm
@@ -53,6 +53,8 @@ jobs:
           find bootstrap/cache -type d -exec sh -c 'printf "%s\n" "Deny from all" > "$1/.htaccess"' _ {} \;
 
       - name: Deploy to Hostinger
+        id: deploy_attempt_1
+        continue-on-error: true
         uses: appleboy/scp-action@ff85246acaad7bdce478db94a363cd2bf7c90345 # v1
         with:
           host: ${{ secrets.SCP_HOST }}
@@ -61,6 +63,46 @@ jobs:
           port: ${{ secrets.SCP_PORT }}
           target: /home/u685478147/public_html/public_html/notion_scan_business_card
           overwrite: true
+          timeout: 60s
+          command_timeout: 15m
+          source: ".htaccess,app,artisan,bootstrap,composer.json,composer.lock,config,database,public,resources,routes,storage,vendor,vite.config.js"
+
+      - name: Wait before Hostinger deploy retry
+        if: steps.deploy_attempt_1.outcome == 'failure'
+        run: sleep 30
+
+      - name: Deploy to Hostinger (retry 1)
+        if: steps.deploy_attempt_1.outcome == 'failure'
+        id: deploy_attempt_2
+        continue-on-error: true
+        uses: appleboy/scp-action@ff85246acaad7bdce478db94a363cd2bf7c90345 # v1
+        with:
+          host: ${{ secrets.SCP_HOST }}
+          username: ${{ secrets.SCP_USER }}
+          key: ${{ secrets.SCP_PRIVATE_KEY }}
+          port: ${{ secrets.SCP_PORT }}
+          target: /home/u685478147/public_html/public_html/notion_scan_business_card
+          overwrite: true
+          timeout: 60s
+          command_timeout: 15m
+          source: ".htaccess,app,artisan,bootstrap,composer.json,composer.lock,config,database,public,resources,routes,storage,vendor,vite.config.js"
+
+      - name: Wait before final Hostinger deploy retry
+        if: steps.deploy_attempt_1.outcome == 'failure' && steps.deploy_attempt_2.outcome == 'failure'
+        run: sleep 60
+
+      - name: Deploy to Hostinger (retry 2)
+        if: steps.deploy_attempt_1.outcome == 'failure' && steps.deploy_attempt_2.outcome == 'failure'
+        uses: appleboy/scp-action@ff85246acaad7bdce478db94a363cd2bf7c90345 # v1
+        with:
+          host: ${{ secrets.SCP_HOST }}
+          username: ${{ secrets.SCP_USER }}
+          key: ${{ secrets.SCP_PRIVATE_KEY }}
+          port: ${{ secrets.SCP_PORT }}
+          target: /home/u685478147/public_html/public_html/notion_scan_business_card
+          overwrite: true
+          timeout: 60s
+          command_timeout: 15m
           source: ".htaccess,app,artisan,bootstrap,composer.json,composer.lock,config,database,public,resources,routes,storage,vendor,vite.config.js"
 
       - name: Smoke test deployed application
