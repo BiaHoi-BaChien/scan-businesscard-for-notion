@@ -4,7 +4,7 @@
     "type": "project",
     "require": {
         "php": "^8.5",
-        "laravel/framework": "13.9.0",
+        "laravel/framework": "13.12.0",
         "laravel/sanctum": "^4.0",
         "laravel/tinker": "^3.0",
         "spatie/laravel-passkeys": "^1.3"
