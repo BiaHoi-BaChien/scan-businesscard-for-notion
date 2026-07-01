@@ -1,6 +1,10 @@
 DirectoryIndex index.php
 Options -Indexes
 
+<IfModule mod_headers.c>
+    Header set X-Robots-Tag "noindex, nofollow, noarchive, nosnippet, noimageindex"
+</IfModule>
+
 <IfModule mod_rewrite.c>
     RewriteEngine On
     RewriteBase /notion_scan_business_card/
