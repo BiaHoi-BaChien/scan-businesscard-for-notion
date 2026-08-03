@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\User;
 use App\Services\PasskeyManager;
+use Cose\Algorithms;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
@@ -255,6 +256,19 @@ class PasskeySecurityTest extends TestCase
             ->assertOk()
             ->assertJsonPath('options.excludeCredentials.0.type', PublicKeyCredentialDescriptor::CREDENTIAL_TYPE_PUBLIC_KEY)
             ->assertJsonPath('options.excludeCredentials.0.id', Base64UrlSafe::encodeUnpadded($credentialId));
+    }
+
+    public function test_passkey_registration_options_include_supported_public_key_algorithms(): void
+    {
+        $user = $this->createUser();
+
+        $this->actingAs($user)
+            ->postJson(route('passkeys.register.options'))
+            ->assertOk()
+            ->assertJsonPath('options.pubKeyCredParams.0.type', PublicKeyCredentialDescriptor::CREDENTIAL_TYPE_PUBLIC_KEY)
+            ->assertJsonPath('options.pubKeyCredParams.0.alg', Algorithms::COSE_ALGORITHM_ES256)
+            ->assertJsonPath('options.pubKeyCredParams.1.type', PublicKeyCredentialDescriptor::CREDENTIAL_TYPE_PUBLIC_KEY)
+            ->assertJsonPath('options.pubKeyCredParams.1.alg', Algorithms::COSE_ALGORITHM_RS256);
     }
 
     public function test_layout_loads_alpine_from_the_local_vite_bundle(): void
