@@ -271,6 +271,66 @@ class PasskeySecurityTest extends TestCase
             ->assertJsonPath('options.pubKeyCredParams.1.alg', Algorithms::COSE_ALGORITHM_RS256);
     }
 
+    public function test_dashboard_hides_registration_form_and_shows_delete_action_when_passkey_exists(): void
+    {
+        $user = $this->createUser();
+        $passkey = $user->passkeys()->create([
+            'name' => '自宅PC',
+            'data' => $this->createCredentialSource('dashboard-credential-id'),
+        ]);
+
+        $this->actingAs($user)
+            ->get(route('dashboard'))
+            ->assertOk()
+            ->assertDontSee('id="passkey-device-name"', false)
+            ->assertSee('登録済みパスキー')
+            ->assertSee('自宅PC')
+            ->assertSee(route('passkeys.destroy', $passkey), false);
+    }
+
+    public function test_dashboard_shows_registration_form_when_passkey_does_not_exist(): void
+    {
+        $user = $this->createUser();
+
+        $this->actingAs($user)
+            ->get(route('dashboard'))
+            ->assertOk()
+            ->assertSee('data-passkey-register', false)
+            ->assertDontSee('登録済みパスキー');
+    }
+
+    public function test_user_can_delete_own_passkey(): void
+    {
+        $user = $this->createUser();
+        $passkey = $user->passkeys()->create([
+            'name' => '削除対象',
+            'data' => $this->createCredentialSource('deletable-credential-id'),
+        ]);
+
+        $this->actingAs($user)
+            ->delete(route('passkeys.destroy', $passkey))
+            ->assertRedirect(route('dashboard'))
+            ->assertSessionHas('status', 'パスキーを削除しました。');
+
+        $this->assertDatabaseMissing('passkeys', ['id' => $passkey->id]);
+    }
+
+    public function test_user_cannot_delete_another_users_passkey(): void
+    {
+        $user = $this->createUser();
+        $otherUser = $this->createUser();
+        $passkey = $otherUser->passkeys()->create([
+            'name' => '他ユーザーの端末',
+            'data' => $this->createCredentialSource('other-user-credential-id'),
+        ]);
+
+        $this->actingAs($user)
+            ->delete(route('passkeys.destroy', $passkey))
+            ->assertNotFound();
+
+        $this->assertDatabaseHas('passkeys', ['id' => $passkey->id]);
+    }
+
     public function test_layout_loads_alpine_from_the_local_vite_bundle(): void
     {
         $response = $this->get(route('login.form'));
@@ -290,7 +350,7 @@ class PasskeySecurityTest extends TestCase
 
     private function createCredentialSource(string $credentialId): PublicKeyCredentialSource
     {
-        return PublicKeyCredentialSource::create(
+        return PublicKeyCredentialSource::fromCredentialRecord(PublicKeyCredentialSource::create(
             $credentialId,
             PublicKeyCredentialDescriptor::CREDENTIAL_TYPE_PUBLIC_KEY,
             [PublicKeyCredentialDescriptor::AUTHENTICATOR_TRANSPORT_INTERNAL],
@@ -300,6 +360,6 @@ class PasskeySecurityTest extends TestCase
             base64_decode('pQECAyYgASFYIJV56vRrFusoDf9hm3iDmllcxxXzzKyO9WruKw4kWx7zIlgg/nq63l8IMJcIdKDJcXRh9hoz0L+nVwP1Oxil3/oNQYs=', true),
             'user-handle',
             0,
-        );
+        ));
     }
 }

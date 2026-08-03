@@ -143,18 +143,40 @@
     </section>
 
     <section class="security-section">
-        <header>
-            <h2>パスキー登録</h2>
-            <p>この端末にパスキーを登録すると、次回から簡単にログインできます。</p>
-        </header>
-        <div class="stack gap-sm security-form">
-            <label class="field-label">デバイス名（任意）
-                <input type="text" id="passkey-device-name" placeholder="例: 自宅PC">
-            </label>
-            <p class="field-hint">共有端末では登録しないでください。</p>
-            <button type="button" class="secondary" data-passkey-register aria-describedby="passkey-register-message">この端末にパスキーを登録</button>
-            <small class="inline-message" id="passkey-register-message" role="status" aria-live="polite"></small>
-        </div>
+        @if($passkeys->isEmpty())
+            <header>
+                <h2>パスキー登録</h2>
+                <p>この端末にパスキーを登録すると、次回から簡単にログインできます。</p>
+            </header>
+            <div class="stack gap-sm security-form">
+                <label class="field-label">デバイス名（任意）
+                    <input type="text" id="passkey-device-name" placeholder="例: 自宅PC">
+                </label>
+                <p class="field-hint">共有端末では登録しないでください。</p>
+                <button type="button" class="secondary" data-passkey-register aria-describedby="passkey-register-message">この端末にパスキーを登録</button>
+                <small class="inline-message" id="passkey-register-message" role="status" aria-live="polite"></small>
+            </div>
+        @else
+            <header>
+                <h2>登録済みパスキー</h2>
+                <p>不要になった端末のパスキーを削除できます。</p>
+            </header>
+            <ul class="passkey-list">
+                @foreach($passkeys as $passkey)
+                    <li class="passkey-item">
+                        <div>
+                            <strong>{{ $passkey->name ?: '名称未設定の端末' }}</strong>
+                            <span>登録日: {{ $passkey->created_at?->format('Y/m/d H:i') }}</span>
+                        </div>
+                        <form method="POST" action="{{ route('passkeys.destroy', $passkey) }}" onsubmit="return confirm('このパスキーを削除しますか？');">
+                            @csrf
+                            @method('DELETE')
+                            <button type="submit" class="danger-button">削除</button>
+                        </form>
+                    </li>
+                @endforeach
+            </ul>
+        @endif
     </section>
 </x-layouts.app>
 <script>
@@ -414,7 +436,7 @@
                     state: optionPayload?.state,
                 });
 
-                setMessage('パスキーを登録しました。次回からパスキーでログインできます。');
+                window.location.reload();
             } catch (error) {
                 console.error(error);
                 setMessage(error?.message || 'パスキーの登録に失敗しました。', true);
