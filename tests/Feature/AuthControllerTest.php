@@ -62,7 +62,7 @@ class AuthControllerTest extends TestCase
         ]);
     }
 
-    public function test_logout_button_is_rendered_after_main_content(): void
+    public function test_logout_button_is_rendered_in_main_navigation(): void
     {
         $user = User::create([
             'username' => 'user_'.Str::random(8),
@@ -72,7 +72,7 @@ class AuthControllerTest extends TestCase
         $this->actingAs($user)
             ->get(route('dashboard'))
             ->assertOk()
-            ->assertSeeInOrder(['</main>', 'ログアウト'], false);
+            ->assertSeeInOrder(['メインナビゲーション', 'ログアウト', '</header>', '<main'], false);
     }
 
     public function test_login_is_rate_limited_by_username_and_ip(): void

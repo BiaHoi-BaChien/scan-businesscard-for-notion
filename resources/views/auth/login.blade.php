@@ -1,28 +1,29 @@
 <x-layouts.app>
-    <article style="max-width: 480px; margin: auto;">
-        <hgroup>
+    <div class="auth-shell">
+        <article class="auth-panel">
             <h1>ログイン</h1>
-        </hgroup>
-        <form method="POST" action="{{ route('login') }}">
-            @csrf
-            <label>ユーザー名
-                <input type="text" name="username" value="{{ old('username') }}" required>
-            </label>
-            <label>パスワード
-                <input type="password" name="password" placeholder="パスワードを入力" required>
-            </label>
-            <button type="submit">パスワードでログイン</button>
-        </form>
+            <p class="auth-intro">{{ config('app.display_name') }}を利用するアカウントでログインしてください。</p>
+            <form method="POST" action="{{ route('login') }}" class="stack gap-sm">
+                @csrf
+                <label class="field-label">ユーザー名
+                    <input type="text" name="username" value="{{ old('username') }}" required>
+                </label>
+                <label class="field-label">パスワード
+                    <input type="password" name="password" placeholder="パスワードを入力" required>
+                </label>
+                <button type="submit" class="primary">パスワードでログイン</button>
+            </form>
 
-        <section class="stack" style="margin-top: 1.5rem;">
-            <header>
-                <h3 style="margin:0;">パスキーでログイン</h3>
-                <p class="muted" style="margin: 0.2rem 0 0;">ブラウザに登録したパスキーで、ワンタップログインができます。</p>
-            </header>
-            <button type="button" class="secondary" data-passkey-login>パスキーを使用する</button>
-            <small class="muted" id="passkey-login-message"></small>
-        </section>
-    </article>
+            <div class="auth-divider" aria-hidden="true">または</div>
+
+            <section class="passkey-login">
+                <h2>パスキーでログイン</h2>
+                <p>この端末に登録済みのパスキーを使用します。</p>
+                <button type="button" class="secondary block" data-passkey-login aria-describedby="passkey-login-message">パスキーを使用する</button>
+                <small class="inline-message" id="passkey-login-message" role="status" aria-live="polite"></small>
+            </section>
+        </article>
+    </div>
 </x-layouts.app>
 <script>
     const COOKIE_NAME = 'username';
@@ -69,7 +70,7 @@
             const el = document.getElementById('passkey-login-message');
             if (!el) return;
             el.textContent = message || '';
-            el.style.color = isError ? '#c00' : 'inherit';
+            el.classList.toggle('is-error', isError);
         };
 
         const transformOptions = (options) => {
@@ -188,7 +189,7 @@
             } catch (error) {
                 if (error?.responseStatus === 419 && !sessionStorage.getItem(reloadFlagKey)) {
                     sessionStorage.setItem(reloadFlagKey, '1');
-                    setMessage('Session expired. Reloading the page to retry passkey.');
+                    setMessage('セッションの有効期限が切れました。ページを再読み込みします。');
                     window.location.reload();
                     return;
                 }

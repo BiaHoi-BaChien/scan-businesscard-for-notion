@@ -1,10 +1,10 @@
 <x-layouts.app>
-    <section class="cards" x-data="Object.assign(deviceState(), cardUploader(false), processor())" x-init="initDeviceState(); scrollToResultsIfNeeded(@json(!is_null(session('analysis'))))">
+    <section class="workflow-grid" x-data="Object.assign(deviceState(), cardUploader(false), processor())" x-init="initDeviceState(); scrollToResultsIfNeeded(@json(!is_null(session('analysis'))))">
         <article class="panel">
-            <header class="grid" style="gap:0.35rem; align-items:flex-start;">
+            <header class="panel-header">
                 <div>
-                    <h2 style="margin:0;">名刺アップロード</h2>
-                    <p class="muted" style="margin:0;">表裏最大2枚。PCならドラッグ＆ドロップにも対応しています。</p>
+                    <h2>名刺アップロード</h2>
+                    <p>表裏最大2枚。PCではドラッグ＆ドロップも利用できます。</p>
                 </div>
             </header>
             <form method="POST" action="{{ route('cards.analyze') }}" enctype="multipart/form-data" class="stack gap-sm" @submit.prevent="submit($event)" data-message="解析中..." data-success="解析が完了しました" data-upload-form>
@@ -17,13 +17,13 @@
                 </template>
                 <template x-if="isMobile">
                     <div class="stack gap-sm">
-                        <div class="muted">表面の画像を選択</div>
-                        <div class="grid grid-2">
+                        <div class="field-label">表面の画像を選択</div>
+                        <div class="grid grid-2 mobile-actions">
                             <button type="button" class="secondary" @click="openMobilePicker('frontInput', false)">ギャラリーから選択</button>
                             <button type="button" class="secondary" @click="openMobilePicker('frontInput', true)">カメラで撮影</button>
                         </div>
                         <input type="file" x-ref="frontInput" name="front" accept="image/*" @change="updateLabel($event)" class="visually-hidden">
-                        <p class="muted" aria-live="polite">選択中: <span x-text="frontFileName || 'なし'"></span></p>
+                        <p class="field-hint" aria-live="polite">選択中: <span x-text="frontFileName || 'なし'"></span></p>
                     </div>
                 </template>
                 <template x-if="!isMobile">
@@ -36,24 +36,24 @@
                 </template>
                 <template x-if="isMobile">
                     <div class="stack gap-sm">
-                        <div class="muted">裏面（任意）</div>
-                        <div class="grid grid-2">
+                        <div class="field-label">裏面（任意）</div>
+                        <div class="grid grid-2 mobile-actions">
                             <button type="button" class="secondary" @click="openMobilePicker('backInput', false)">ギャラリーから選択</button>
                             <button type="button" class="secondary" @click="openMobilePicker('backInput', true)">カメラで撮影</button>
                         </div>
                         <input type="file" x-ref="backInput" name="back" accept="image/*" @change="updateLabel($event)" class="visually-hidden">
-                        <p class="muted" aria-live="polite">選択中: <span x-text="backFileName || 'なし'"></span></p>
+                        <p class="field-hint" aria-live="polite">選択中: <span x-text="backFileName || 'なし'"></span></p>
                     </div>
                 </template>
-                <p class="muted">送信すると画像を保存せずに解析を実行します。</p>
+                <p class="field-hint">画像は保存せず、解析処理にのみ使用します。</p>
                 <button type="submit" :disabled="!hasFiles || processing" class="primary block">解析する</button>
             </form>
         </article>
         <article class="panel" id="analysis-results">
-            <header class="grid" style="gap:0.35rem; align-items:flex-start;">
+            <header class="panel-header">
                 <div>
-                    <h2 style="margin:0;">解析結果</h2>
-                    <p class="muted" style="margin:0;">OpenAIで抽出した内容を確認してください。</p>
+                    <h2>解析結果</h2>
+                    <p>抽出内容を確認し、必要に応じて修正してください。</p>
                 </div>
             </header>
             <div class="stack gap-sm">
@@ -77,7 +77,7 @@
                         <div class="grid grid-2">
                             @foreach($labels as $key => $label)
                                 @if(array_key_exists($key, $analysis))
-                                    <label class="muted">{{ $label }}
+                                    <label class="field-label">{{ $label }}
                                         <input
                                             type="text"
                                             name="{{ $key }}"
@@ -92,11 +92,11 @@
                             @endforeach
                         </div>
                         @if(array_key_exists('address', $analysis))
-                            <p class="muted" id="address-hint" style="margin: 0;">
+                            <p class="field-hint" id="address-hint">
                                 住所の入力は「都道府県」などを新字体で統一してください。
                             </p>
                         @endif
-                        <label><input type="checkbox" x-model="ok"> この内容でOK</label>
+                        <label class="confirm-label"><input type="checkbox" x-model="ok"> 内容を確認しました</label>
                         <button type="submit" class="primary block" :disabled="!ok || processing">Notionに登録する</button>
                         @if(session('notion_url'))
                             <div>
@@ -112,18 +112,20 @@
                         @endif
                     </form>
                 @else
-                    <p class="muted">まだ解析結果がありません。</p>
+                    <div class="empty-state">名刺を解析すると、ここに確認項目が表示されます。</div>
                 @endif
             </div>
         </article>
-        <form method="POST" action="{{ route('cards.clear') }}" class="full-span" data-message="" @submit.prevent="clearAll($event)">
-            @csrf
-            <button type="submit" class="secondary block" :disabled="processing">クリア</button>
-        </form>
+        <div class="workflow-actions full-span">
+            <form method="POST" action="{{ route('cards.clear') }}" data-message="" @submit.prevent="clearAll($event)">
+                @csrf
+                <button type="submit" class="button-link" :disabled="processing">入力内容をクリア</button>
+            </form>
+        </div>
 
         <template x-if="processing && showOverlay">
-            <div style="position:fixed;inset:0;background:rgba(0,0,0,0.55);display:flex;align-items:center;justify-content:center;z-index:50;backdrop-filter:blur(1px);">
-                <article class="contrast overlay-card">
+            <div class="processing-overlay" role="dialog" aria-modal="true" aria-label="処理状況">
+                <article class="processing-dialog">
                     <p class="wave-text" aria-live="assertive">
                         <template x-for="(char, idx) in messageChars" :key="idx">
                             <span
@@ -134,27 +136,25 @@
                             ></span>
                         </template>
                     </p>
-                    <button type="button" class="secondary" @click="cancel">CANCEL</button>
+                    <button type="button" class="secondary" @click="cancel">キャンセル</button>
                 </article>
             </div>
         </template>
     </section>
 
-    <section style="margin-top:1.5rem; align-items:stretch;">
-        <article class="panel">
-            <header class="grid" style="gap:0.25rem;">
-                <h3 style="margin:0;">パスキー登録</h3>
-                <p class="muted" style="margin:0;">この端末にパスキーを登録して、次回以降のログインを簡単にしましょう。</p>
-            </header>
-            <div class="stack gap-sm">
-                <label class="muted">デバイス名（任意）
-                    <input type="text" id="passkey-device-name" placeholder="例: 自宅PC">
-                </label>
-                <p class="muted" style="margin:0;">ブラウザのパスキー機能を利用します。共有端末では実施しないでください。</p>
-                <button type="button" class="secondary" data-passkey-register>この端末にパスキーを登録</button>
-                <small class="muted" id="passkey-register-message"></small>
-            </div>
-        </article>
+    <section class="security-section">
+        <header>
+            <h2>パスキー登録</h2>
+            <p>この端末にパスキーを登録すると、次回から簡単にログインできます。</p>
+        </header>
+        <div class="stack gap-sm security-form">
+            <label class="field-label">デバイス名（任意）
+                <input type="text" id="passkey-device-name" placeholder="例: 自宅PC">
+            </label>
+            <p class="field-hint">共有端末では登録しないでください。</p>
+            <button type="button" class="secondary" data-passkey-register aria-describedby="passkey-register-message">この端末にパスキーを登録</button>
+            <small class="inline-message" id="passkey-register-message" role="status" aria-live="polite"></small>
+        </div>
     </section>
 </x-layouts.app>
 <script>
@@ -334,7 +334,7 @@
             const el = document.getElementById('passkey-register-message');
             if (!el) return;
             el.textContent = message || '';
-            el.style.color = isError ? '#c00' : 'inherit';
+            el.classList.toggle('is-error', isError);
         };
 
         const transformOptions = (options) => {
