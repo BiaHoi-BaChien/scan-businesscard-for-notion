@@ -55,7 +55,7 @@ class PasskeyManager
         );
     }
 
-    public function authenticationOptions(User $user): array
+    public function authenticationOptions(): array
     {
         $action = PasskeyConfig::getAction(
             'generate_passkey_authentication_options',

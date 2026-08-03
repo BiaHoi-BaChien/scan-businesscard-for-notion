@@ -36,6 +36,32 @@ class AuthControllerTest extends TestCase
         $this->assertNotSame($oldSessionId, Session::getId());
     }
 
+    public function test_login_failure_does_not_reveal_whether_username_exists(): void
+    {
+        $user = User::create([
+            'username' => 'known-user',
+            'password' => Hash::make('password123'),
+        ]);
+
+        $unknownUserResponse = $this->post(route('login'), [
+            'username' => 'unknown-user',
+            'password' => 'wrong-password',
+        ]);
+
+        $unknownUserResponse->assertSessionHasErrors([
+            'username' => '認証に失敗しました',
+        ]);
+
+        $knownUserResponse = $this->post(route('login'), [
+            'username' => $user->username,
+            'password' => 'wrong-password',
+        ]);
+
+        $knownUserResponse->assertSessionHasErrors([
+            'username' => '認証に失敗しました',
+        ]);
+    }
+
     public function test_logout_button_is_rendered_after_main_content(): void
     {
         $user = User::create([

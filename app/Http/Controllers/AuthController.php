@@ -9,6 +9,8 @@ use Illuminate\Support\Facades\Hash;
 
 class AuthController extends Controller
 {
+    private const DUMMY_PASSWORD_HASH = '$2y$12$wFHnG3cvbG.y42CIRt1AP.YvX9F1xg.ghdRGYZMBoFtQwdocKbfIi';
+
     public function showLogin()
     {
         return response()
@@ -26,15 +28,13 @@ class AuthController extends Controller
         ]);
 
         $user = User::where('username', $credentials['username'])->first();
+        $passwordHash = $user?->password ?? self::DUMMY_PASSWORD_HASH;
+        $passwordValid = Hash::check($credentials['password'], $passwordHash);
 
-        if (! $user) {
-            return back()->withErrors(['username' => 'ユーザーが見つかりませんでした']);
-        }
-
-        $passwordProvided = $credentials['password'] ?? null;
-
-        if (! $passwordProvided || ! Hash::check($passwordProvided, $user->password)) {
-            return back()->withErrors(['password' => '認証に失敗しました'])->withInput();
+        if (! $user || ! $passwordValid) {
+            return back()
+                ->withErrors(['username' => '認証に失敗しました'])
+                ->withInput($request->only('username'));
         }
 
         Auth::login($user, true);

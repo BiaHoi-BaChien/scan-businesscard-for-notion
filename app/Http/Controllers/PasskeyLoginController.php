@@ -20,12 +20,10 @@ class PasskeyLoginController extends Controller
             'origin_hint' => 'nullable|string',
         ]);
 
-        $user = User::where('username', $data['username'])->first();
-
         $logContext = [
             'action' => 'passkey.options.start',
             'username' => $data['username'],
-            'user_id' => $user?->id,
+            'user_id' => null,
             'session_id' => $request->session()->getId(),
             'user_agent' => $request->userAgent(),
             'has_navigator_credentials' => $request->boolean('has_navigator_credentials'),
@@ -35,14 +33,8 @@ class PasskeyLoginController extends Controller
 
         Log::info('Passkey authentication options request started', $logContext);
 
-        if (! $user) {
-            return response()->json([
-                'message' => 'ユーザーが見つかりませんでした。',
-            ], 404);
-        }
-
         try {
-            return response()->json($passkeyManager->authenticationOptions($user));
+            return response()->json($passkeyManager->authenticationOptions());
         } catch (RuntimeException $exception) {
             Log::warning('Passkey authentication options error', array_merge($logContext, [
                 'exception_class' => get_class($exception),
@@ -81,9 +73,7 @@ class PasskeyLoginController extends Controller
         Log::info('Passkey authentication login request started', $logContext);
 
         if (! $user) {
-            return response()->json([
-                'message' => 'ユーザーが見つかりませんでした。',
-            ], 404);
+            return $this->authenticationFailureResponse();
         }
 
         try {
@@ -94,9 +84,7 @@ class PasskeyLoginController extends Controller
                 'exception_message' => $exception->getMessage(),
             ]));
 
-            return response()->json([
-                'message' => 'パスキー認証に失敗しました。管理者に確認してください。',
-            ], 422);
+            return $this->authenticationFailureResponse();
         }
 
         if (! $authenticated) {
@@ -104,9 +92,7 @@ class PasskeyLoginController extends Controller
                 'authenticated' => false,
             ]));
 
-            return response()->json([
-                'message' => '認証に失敗しました。',
-            ], 422);
+            return $this->authenticationFailureResponse();
         }
 
         Log::info('Passkey authentication result', array_merge($logContext, [
@@ -119,5 +105,12 @@ class PasskeyLoginController extends Controller
         return response()->json([
             'redirect' => route('dashboard'),
         ]);
+    }
+
+    private function authenticationFailureResponse(): JsonResponse
+    {
+        return response()->json([
+            'message' => '認証に失敗しました。',
+        ], 422);
     }
 }

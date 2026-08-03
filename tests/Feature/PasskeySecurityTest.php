@@ -7,6 +7,7 @@ use App\Services\PasskeyManager;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
+use LogicException;
 use Mockery\MockInterface;
 use ParagonIE\ConstantTime\Base64UrlSafe;
 use Symfony\Component\Uid\Uuid;
@@ -48,6 +49,42 @@ class PasskeySecurityTest extends TestCase
             ->assertHeader('Retry-After');
     }
 
+    public function test_passkey_authentication_options_do_not_reveal_whether_username_exists(): void
+    {
+        $user = $this->createUser();
+
+        $this->mock(PasskeyManager::class, function (MockInterface $mock): void {
+            $mock->shouldReceive('authenticationOptions')
+                ->twice()
+                ->andReturn([
+                    'options' => ['challenge' => 'test-challenge'],
+                    'state' => 'test-state',
+                ]);
+        });
+
+        $unknownUserResponse = $this->postJson(route('passkeys.options'), [
+            'username' => 'unknown-user',
+        ]);
+        $knownUserResponse = $this->postJson(route('passkeys.options'), [
+            'username' => $user->username,
+        ]);
+
+        $unknownUserResponse->assertOk();
+        $knownUserResponse->assertOk();
+        $this->assertSame($knownUserResponse->json(), $unknownUserResponse->json());
+    }
+
+    public function test_unknown_username_receives_non_identifying_passkey_options(): void
+    {
+        $this->postJson(route('passkeys.options'), [
+            'username' => 'unknown-user',
+        ])->assertOk()
+            ->assertJsonStructure([
+                'options' => ['challenge'],
+                'state',
+            ]);
+    }
+
     public function test_passkey_login_attempts_are_rate_limited(): void
     {
         $user = $this->createUser();
@@ -76,6 +113,74 @@ class PasskeySecurityTest extends TestCase
             ])
             ->assertTooManyRequests()
             ->assertHeader('Retry-After');
+    }
+
+    public function test_passkey_login_failure_does_not_reveal_whether_username_exists(): void
+    {
+        $user = $this->createUser();
+
+        $this->mock(PasskeyManager::class, function (MockInterface $mock): void {
+            $mock->shouldReceive('authenticate')
+                ->once()
+                ->andReturnFalse();
+        });
+
+        $payload = [
+            'data' => ['id' => 'test-credential'],
+            'state' => 'test-state',
+        ];
+
+        $unknownUserResponse = $this->postJson(route('passkeys.login'), [
+            'username' => 'unknown-user',
+            ...$payload,
+        ]);
+        $knownUserResponse = $this->postJson(route('passkeys.login'), [
+            'username' => $user->username,
+            ...$payload,
+        ]);
+
+        $expectedFailure = ['message' => '認証に失敗しました。'];
+
+        $unknownUserResponse->assertUnprocessable()->assertExactJson($expectedFailure);
+        $knownUserResponse->assertUnprocessable()->assertExactJson($expectedFailure);
+    }
+
+    public function test_valid_passkey_login_still_authenticates_user(): void
+    {
+        $user = $this->createUser();
+
+        $this->mock(PasskeyManager::class, function (MockInterface $mock): void {
+            $mock->shouldReceive('authenticate')
+                ->once()
+                ->andReturnTrue();
+        });
+
+        $this->postJson(route('passkeys.login'), [
+            'username' => $user->username,
+            'data' => ['id' => 'valid-credential'],
+            'state' => 'test-state',
+        ])->assertOk()
+            ->assertJsonPath('redirect', route('dashboard'));
+
+        $this->assertAuthenticatedAs($user);
+    }
+
+    public function test_unexpected_json_exception_does_not_expose_internal_message(): void
+    {
+        $user = $this->createUser();
+
+        $this->mock(PasskeyManager::class, function (MockInterface $mock): void {
+            $mock->shouldReceive('authenticationOptions')
+                ->once()
+                ->andThrow(new LogicException('sensitive internal diagnostic'));
+        });
+
+        $this->postJson(route('passkeys.options'), [
+            'username' => $user->username,
+        ])->assertInternalServerError()
+            ->assertExactJson([
+                'message' => 'サーバー内部でエラーが発生しました。',
+            ]);
     }
 
     public function test_passkey_registration_options_are_rate_limited(): void
