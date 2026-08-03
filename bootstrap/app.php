@@ -48,7 +48,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $exceptions->render(function (\Throwable $e, \Illuminate\Http\Request $request) {
             if ($request->wantsJson()) {
                 return response()->json([
-                    'message' => $e->getMessage(),
+                    'message' => 'サーバー内部でエラーが発生しました。',
                 ], 500);
             }
         });
