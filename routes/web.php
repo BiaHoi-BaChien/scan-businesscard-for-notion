@@ -2,7 +2,6 @@
 
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\BusinessCardController;
-use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\PasskeyLoginController;
 use App\Http\Controllers\PasskeyRegistrationController;
 use Illuminate\Support\Facades\Route;
@@ -29,7 +28,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/', function () {
         return redirect()->route('dashboard');
     });
-    Route::get('/dashboard', DashboardController::class)->name('dashboard');
+    Route::view('/dashboard', 'dashboard')->name('dashboard');
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
     Route::post('/passkeys/register/options', [PasskeyRegistrationController::class, 'options'])
