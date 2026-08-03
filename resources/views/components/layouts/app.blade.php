@@ -87,6 +87,14 @@
         .security-section h2 { margin: 0; font-size: 1.05rem; }
         .security-section header p { margin: 0.25rem 0 0; color: var(--muted); font-size: 0.875rem; }
         .security-form { max-width: 680px; }
+        .passkey-list { display: grid; max-width: 680px; gap: 0.65rem; margin: 0; padding: 0; list-style: none; }
+        .passkey-item { display: flex; min-width: 0; align-items: center; justify-content: space-between; gap: 1rem; padding: 0.85rem 1rem; border: 1px solid var(--border); border-radius: 6px; background: var(--surface); }
+        .passkey-item > div { display: grid; min-width: 0; gap: 0.15rem; }
+        .passkey-item strong { overflow-wrap: anywhere; }
+        .passkey-item span { color: var(--muted); font-size: 0.8rem; }
+        .passkey-item form { flex: 0 0 auto; margin: 0; }
+        .danger-button { width: auto; margin: 0; padding-inline: 0.9rem; border-color: #d92d20; background: var(--surface); color: var(--danger); }
+        .danger-button:hover { border-color: var(--danger); background: var(--danger-soft); color: var(--danger); }
         .inline-message { min-height: 1.25rem; color: var(--muted); }
         .inline-message.is-error { color: var(--danger); }
         .processing-overlay { position: fixed; inset: 0; z-index: 50; display: flex; align-items: center; justify-content: center; padding: 1rem; background: rgba(15, 23, 42, 0.55); backdrop-filter: blur(2px); }
@@ -121,6 +129,8 @@
             .grid-2 { grid-template-columns: minmax(0, 1fr); }
             .mobile-actions { grid-template-columns: minmax(0, 1fr); }
             .security-section { margin-top: 1.5rem; }
+            .passkey-item { align-items: stretch; flex-direction: column; }
+            .passkey-item form, .passkey-item .danger-button { width: 100%; }
             .auth-shell { margin-top: 0; }
             .auth-panel { padding: 1.15rem; }
         }

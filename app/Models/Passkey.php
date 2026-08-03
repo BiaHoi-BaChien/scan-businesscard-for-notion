@@ -4,9 +4,9 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Spatie\LaravelPasskeys\Support\Serializer;
 use Spatie\LaravelPasskeys\Models\Passkey as BasePasskey;
-use Webauthn\PublicKeyCredentialSource;
+use Spatie\LaravelPasskeys\Support\Serializer;
+use Webauthn\CredentialRecord;
 
 class Passkey extends BasePasskey
 {
@@ -29,9 +29,9 @@ class Passkey extends BasePasskey
         return new Attribute(
             get: fn (string $value) => $serializer->fromJson(
                 $value,
-                PublicKeyCredentialSource::class
+                CredentialRecord::class
             ),
-            set: function (PublicKeyCredentialSource $value) use ($serializer) {
+            set: function (CredentialRecord $value) use ($serializer) {
                 return [
                     'credential_id' => mb_convert_encoding($value->publicKeyCredentialId, 'UTF-8'),
                     'data' => $serializer->toJson($value),
