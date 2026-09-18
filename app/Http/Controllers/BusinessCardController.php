@@ -85,7 +85,7 @@ class BusinessCardController extends Controller
             $response = Http::withHeaders([
                 'User-Agent' => $this->browserUserAgent,
             ])->withToken($apiKey)->post('https://api.openai.com/v1/chat/completions', [
-                'model' => 'gpt-4o-mini',
+                'model' => config('services.openai.model'),
                 'messages' => [
                     ['role' => 'system', 'content' => 'Extract business card fields and answer in JSON.'],
                     ['role' => 'user', 'content' => [
