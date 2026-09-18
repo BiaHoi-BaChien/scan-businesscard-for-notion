@@ -33,10 +33,15 @@
 | --- | --- |
 | `DB_DATABASE` | SQLite ファイルのパス。例: `database/database.sqlite` |
 | `OPENAI_API_KEY` | OpenAI API キー。 |
+| `OPENAI_MODEL` | 名刺画像の解析に使うモデル名。未設定時は `gpt-5.6-luna`。Chat Completions API で画像入力と JSON モードに対応するモデルを指定してください。 |
 | `NOTION_API_KEY` | Notion のインテグレーションシークレット。 |
 | `NOTION_DATA_SOURCE_ID` | 登録先データソース ID。 |
 | `NOTION_PROPERTY_MAPPING` | Notion のプロパティ対応表 JSON。例: `{ "name": {"name": "名前", "type": "title"} }` |
 | `NOTION_VERSION` | Notion API バージョン（例: `2026-03-11`）。 |
+
+モデルを切り替えるには、`.env` の `OPENAI_MODEL` を変更します。設定をキャッシュしている環境では、変更後に `php artisan config:cache` でキャッシュを再生成してください。
+
+デフォルトには、画像入力と構造化出力に対応する低コストモデル [GPT-5.6 Luna](https://developers.openai.com/api/docs/models/gpt-5.6-luna) を採用しています（2026-09-18 選定）。実際の名刺画像での精度比較は未実施です。
 
 ## 認証とユーザー
 

@@ -46,7 +46,10 @@ class BusinessCardControllerTest extends TestCase
     public function test_analyze_normalizes_japanese_keys_from_openai_response(): void
     {
         $user = $this->createUser();
-        config(['services.openai.api_key' => 'test-key']);
+        config([
+            'services.openai.api_key' => 'test-key',
+            'services.openai.model' => 'test-vision-model',
+        ]);
 
         Http::fake([
             'https://api.openai.com/*' => Http::response([
@@ -69,6 +72,9 @@ class BusinessCardControllerTest extends TestCase
 
         $this->assertSame('山田 太郎', session('analysis.name'));
         $this->assertSame('CTO', session('analysis.job_title'));
+
+        Http::assertSent(fn ($request) => $request->url() === 'https://api.openai.com/v1/chat/completions'
+            && $request['model'] === 'test-vision-model');
     }
 
     public function test_analyze_accepts_uppercase_image_extensions(): void
