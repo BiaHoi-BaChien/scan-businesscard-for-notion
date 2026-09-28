@@ -2,8 +2,11 @@
 
 namespace App\Providers;
 
+use Illuminate\Auth\Events\Login;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
@@ -18,6 +21,14 @@ class AppServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+        Event::listen(Login::class, function (Login $event): void {
+            // Capture at login, before the first protected request can occur.
+            session()->put(
+                'password_hash_'.$event->guard,
+                Auth::guard($event->guard)->hashPasswordForCookie($event->user->getAuthPassword())
+            );
+        });
+
         RateLimiter::for('login', function (Request $request) {
             $username = Str::lower(trim((string) $request->input('username')));
 

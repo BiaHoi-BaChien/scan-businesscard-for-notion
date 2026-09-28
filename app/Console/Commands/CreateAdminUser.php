@@ -5,6 +5,7 @@ namespace App\Console\Commands;
 use App\Models\User;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 
 class CreateAdminUser extends Command
 {
@@ -38,13 +39,11 @@ class CreateAdminUser extends Command
             return self::FAILURE;
         }
 
-        User::updateOrCreate(
-            ['username' => $username],
-            [
-                'password' => Hash::make($password),
-                'is_admin' => true,
-            ]
-        );
+        $user = User::firstOrNew(['username' => $username]);
+        $user->password = Hash::make($password);
+        $user->is_admin = true;
+        $user->setRememberToken(Str::random(60));
+        $user->save();
 
         $this->info(sprintf('Admin user "%s" has been created or updated.', $username));
 
