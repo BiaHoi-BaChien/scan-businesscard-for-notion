@@ -3,11 +3,10 @@
 namespace App\Services;
 
 use App\Models\User;
-use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Session;
+use Illuminate\Support\Str;
 use RuntimeException;
 use Spatie\LaravelPasskeys\Actions\FindPasskeyToAuthenticateAction;
 use Spatie\LaravelPasskeys\Actions\GeneratePasskeyAuthenticationOptionsAction;
@@ -17,6 +16,8 @@ use Spatie\LaravelPasskeys\Support\Config as PasskeyConfig;
 
 class PasskeyManager
 {
+    private const STATE_LIFETIME_SECONDS = 600;
+
     public function registrationOptions(User $user): array
     {
         $action = PasskeyConfig::getAction(
@@ -26,8 +27,6 @@ class PasskeyManager
 
         $optionsJson = $action->execute($user);
 
-        Session::put('passkey-registration-options', $optionsJson);
-
         $options = json_decode($optionsJson, true);
 
         if (! is_array($options)) {
@@ -36,13 +35,13 @@ class PasskeyManager
 
         return [
             'options' => $options,
-            'state' => $this->encryptOptions($optionsJson),
+            'state' => $this->issueState($optionsJson, 'passkey.pending.registration', $user),
         ];
     }
 
     public function register(User $user, array $data, ?string $state = null, ?string $name = null): mixed
     {
-        $optionsJson = $this->resolveOptions($state, 'passkey-registration-options');
+        $optionsJson = $this->resolveOptions($state, 'passkey.pending.registration', $user);
 
         $action = PasskeyConfig::getAction('store_passkey', StorePasskeyAction::class);
 
@@ -64,7 +63,8 @@ class PasskeyManager
 
         $optionsJson = $action->execute();
 
-        Session::put('passkey-authentication-options', $optionsJson);
+        // The package flashes its own options; only our pending ceremony is consumed.
+        Session::forget('passkey-authentication-options');
 
         $options = json_decode($optionsJson, true);
 
@@ -74,13 +74,13 @@ class PasskeyManager
 
         return [
             'options' => $options,
-            'state' => $this->encryptOptions($optionsJson),
+            'state' => $this->issueState($optionsJson, 'passkey.pending.authentication'),
         ];
     }
 
     public function authenticate(User $user, array $data, ?string $state = null): bool
     {
-        $optionsJson = $this->resolveOptions($state, 'passkey-authentication-options');
+        $optionsJson = $this->resolveOptions($state, 'passkey.pending.authentication');
 
         $action = PasskeyConfig::getAction('find_passkey', FindPasskeyToAuthenticateAction::class);
 
@@ -102,40 +102,41 @@ class PasskeyManager
         return $ownerId === $user->id;
     }
 
-    private function encryptOptions(string $optionsJson): string
+    private function issueState(string $optionsJson, string $sessionKey, ?User $user = null): string
     {
-        return Crypt::encryptString($optionsJson);
+        $state = Str::random(64);
+
+        Session::put($sessionKey, [
+            'state' => $state,
+            'options' => $optionsJson,
+            'expires_at' => now()->getTimestamp() + self::STATE_LIFETIME_SECONDS,
+            'user_id' => $user?->getAuthIdentifier(),
+        ]);
+
+        return $state;
     }
 
-    private function resolveOptions(?string $state, string $sessionKey): string
+    private function resolveOptions(?string $state, string $sessionKey, ?User $user = null): string
     {
-        if (is_string($state) && $state !== '') {
-            $cacheKey = $this->stateCacheKey($state);
-            $timestamp = Carbon::now();
-            $cacheAdded = Cache::add($cacheKey, $timestamp->toIso8601String(), $timestamp->copy()->addMinutes(10));
+        $pending = Session::get($sessionKey);
 
-            if (! $cacheAdded) {
-                throw new RuntimeException('このパスキー認証オプションはすでに使用されています。もう一度やり直してください。');
-            }
-
-            try {
-                return Crypt::decryptString($state);
-            } catch (\Throwable $exception) {
-                throw new RuntimeException('パスキー認証オプションが復号できません。', 0, $exception);
-            }
+        if (! is_string($state) || $state === '' || ! is_array($pending)
+            || ! is_string($pending['state'] ?? null)
+            || ! hash_equals($pending['state'], $state)
+            || ! is_string($pending['options'] ?? null)
+            || ! is_int($pending['expires_at'] ?? null)
+            || now()->getTimestamp() >= $pending['expires_at']
+            || ($pending['user_id'] ?? null) !== $user?->getAuthIdentifier()) {
+            throw new RuntimeException('パスキー認証オプションが無効または期限切れです。もう一度やり直してください。');
         }
 
-        $optionsJson = Session::pull($sessionKey);
+        Session::forget($sessionKey);
 
-        if (! is_string($optionsJson) || $optionsJson === '') {
-            throw new RuntimeException('パスキー認証オプションがセッションにありません。もう一度やり直してください。');
+        // Atomically reject concurrent requests holding the same session snapshot.
+        if (! Cache::add('passkey-state-used:'.hash('sha256', $pending['state']), true, self::STATE_LIFETIME_SECONDS)) {
+            throw new RuntimeException('このパスキー認証オプションはすでに使用されています。もう一度やり直してください。');
         }
 
-        return $optionsJson;
-    }
-
-    private function stateCacheKey(string $state): string
-    {
-        return 'passkey-state-used:' . hash('sha256', $state);
+        return $pending['options'];
     }
 }
