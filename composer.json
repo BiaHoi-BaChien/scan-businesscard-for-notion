@@ -3,7 +3,7 @@
     "description": "Business card OCR and Notion connector built with Laravel",
     "type": "project",
     "require": {
-        "php": "^8.5",
+        "php": "^8.5.12",
         "laravel/framework": "13.30.0",
         "laravel/tinker": "^3.0",
         "spatie/laravel-passkeys": "^1.3"
