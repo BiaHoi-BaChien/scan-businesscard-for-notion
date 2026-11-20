@@ -2,9 +2,10 @@
     "name": "scan-businesscard-for-notion/scan-businesscard-for-notion",
     "description": "Business card OCR and Notion connector built with Laravel",
     "type": "project",
+    "license": "Apache-2.0",
     "require": {
-        "php": "^8.5.12",
-        "laravel/framework": "13.40.0",
+        "php": "^8.5.13",
+        "laravel/framework": "~13.40.0",
         "laravel/tinker": "^3.0",
         "spatie/laravel-passkeys": "^1.3"
     },
